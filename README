@@ -1,0 +1,4 @@
+u2flib
+=========
+
+Provides functionality for working with the server side aspects of the U2F protocol.
