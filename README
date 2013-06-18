@@ -1,4 +1,34 @@
 u2flib
 =========
 
-Provides functionality for working with the server side aspects of the U2F protocol.
+Provides functionality for working with the server side aspects of the U2F
+protocol. Currently supports version 0, as implicitly defined by the
+GnubbyPilot implenentation.
+
+Version 0 message formats (all binary data is b64 encoded)
+=========
+Enroll request:
+{
+    "v0": "32498DLFKEER243..." //ys
+}
+
+Enroll response:
+{
+    "version": "v0",
+    "grm": "32498DLFKEER243...", //E(kq | hk | CSR | cert | sig)
+    "dh": "BFJ2934FLKDFJ..." //yd
+}
+
+Sign request:
+{
+    "version": "v0"
+    "challenge": "23JSKAIEDJKA..." //32 byte challenge
+    "key_handle": "AKJSDEI23..." //key handle from enroll.
+}
+
+Sign response:
+//sig = sign(Ho | touch | rnd | cnt | challenge)
+{
+    "touch": "255" //touch byte
+    "enc": "ASJDEIJEKA..." //E(rnd | cnt | sig)
+}
