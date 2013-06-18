@@ -41,4 +41,4 @@ class GRM(object):
         self.signature = None
 
     def verify_csr_signature(self):
-        assert False, 'Attest signature verification failed!'
+        raise Exception('Attest signature verification failed!')

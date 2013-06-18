@@ -71,8 +71,8 @@ class GRM(object):
     def verify_csr_signature(self):
         digest = H(self.ho + self.kq_der + self.hk)
         attest_key = EC.pub_key_from_der(encoder.encode(self.csr[0][6]))
-        assert attest_key.verify_dsa_asn1(digest, self.signature), \
-            'Attest signature verification failed!'
+        if not attest_key.verify_dsa_asn1(digest, self.signature):
+            raise Exception('Attest signature verification failed!')
 
 
 class U2FEnrollment(object):
@@ -99,7 +99,8 @@ class U2FEnrollment(object):
         """
         if isinstance(response, basestring):
             response = json.loads(response)
-        assert response['version'].encode('utf-8') == VERSION
+        if response['version'].encode('utf-8') != VERSION:
+            raise ValueError("Incorrect version: %s" % response['version'])
 
         km = P2DES(self.dh, response['dh'].encode('utf-8'))
         grm = GRM(D(urlsafe_b64decode(response['grm'].encode('utf-8')),
@@ -180,8 +181,8 @@ class U2FChallenge(object):
 
         digest = H(self.binding.ho + touch + rnd + ctr + self.challenge)
 
-        assert self.binding.kq.verify_dsa_asn1(digest, signature), \
-            "Signature verification failed!"
+        if not self.binding.kq.verify_dsa_asn1(digest, signature):
+            raise Exception("Signature verification failed!")
 
         return counter_int, touch_int
 

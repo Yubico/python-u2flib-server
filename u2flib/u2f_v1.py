@@ -97,7 +97,8 @@ class U2FEnrollment(object):
         """
         if isinstance(response, basestring):
             response = json.loads(response)
-        assert response['version'].encode('utf-8') == VERSION
+        if response['version'].encode('utf-8') != VERSION:
+            raise ValueError("Incorrect version: %s", response['version'])
 
         iv = urlsafe_b64decode(response['iv'].encode('utf-8'))
         km = P2DES(self.dh, response['dh'].encode('utf-8'))
@@ -173,10 +174,11 @@ class U2FChallenge(object):
             "challenge": "JJ498DLFKEER243...", // from JS call parameter
         }
         """
-        assert browser_data['typ'] == "navigator.id.getAssertion", \
-            "Incorrect type!"
-        assert urlsafe_b64decode(browser_data['challenge'].encode('utf-8')) \
-            == self.challenge, "Incorrect challenge!"
+        if browser_data['typ'] != "navigator.id.getAssertion":
+            raise Exception("Incorrect type!")
+        if urlsafe_b64decode(browser_data['challenge'].encode('utf-8')) \
+                != self.challenge:
+            raise Exception("Incorrect challenge!")
 
     def validate(self, response):
         """
@@ -193,8 +195,10 @@ class U2FChallenge(object):
             response = json.loads(response)
 
         # This doesn't provide anything as both are verified in the signature.
-        assert urlsafe_b64decode(response['cpk'].encode('utf-8')) == self.cpk
-        assert H(response['origin'].encode('utf-8')) == self.binding.ho
+        if urlsafe_b64decode(response['cpk'].encode('utf-8')) != self.cpk:
+            raise Exception("Invalid cpk!")
+        if H(response['origin'].encode('utf-8')) != self.binding.ho:
+            raise Exception("Invalid origin!")
 
         # Create hash for signature verification:
         browser_data = response['browser_data'].encode('utf-8')
@@ -206,8 +210,8 @@ class U2FChallenge(object):
 
         digest = H(self.binding.ho + Hb + self.cpk + touch + counter)
         signature = urlsafe_b64decode(response['signature'].encode('utf-8'))
-        assert self.binding.kq.verify_dsa_asn1(digest, signature), \
-            "Signature verification failed!"
+        if not self.binding.kq.verify_dsa_asn1(digest, signature):
+            raise Exception("Signature verification failed!")
 
         browser_data = json.loads(urlsafe_b64decode(browser_data))
         self.validate_browser_data(browser_data)

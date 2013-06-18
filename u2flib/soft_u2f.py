@@ -71,7 +71,8 @@ class SoftU2FDevice(object):
         if isinstance(keys, basestring):
             keys = json.loads(keys)
 
-        assert 'v0' in keys, "Unsupported U2F version!"
+        if not 'v0' in keys:
+            raise ValueError("Unsupported U2F version!")
 
         # DH key exchange
         ys = keys['v0'].encode('utf-8')
@@ -117,9 +118,11 @@ class SoftU2FDevice(object):
         if isinstance(params, basestring):
             params = json.loads(params)
 
-        assert params['version'] == 'v0', "Unsupported version!"
+        if params['version'] != 'v0':
+            raise ValueError("Unsupported version: %s" % params['version'])
         hk = urlsafe_b64decode(params['key_handle'].encode('utf-8'))
-        assert hk in self.keys, "Unknown key handle!"
+        if not hk in self.keys:
+            raise ValueError("Unknown key handle!")
 
         # Unwrap:
         privu, km, ho = self.keys[hk]
@@ -159,9 +162,11 @@ class SoftU2FDevice(object):
         if isinstance(params, basestring):
             params = json.loads(params)
 
-        assert params['version'] == 'v1', "Unsupported version!"
+        if params['version'] != 'v1':
+            raise ValueError("Unsupported version: %s" % params['version'])
         hk = urlsafe_b64decode(params['key_handle'].encode('utf-8'))
-        assert hk in self.keys, "Unknown key handle!"
+        if not hk in self.keys:
+            raise ValueError("Unknown key handle!")
 
         # Unwrap:
         privu, km, ho = self.keys[hk]

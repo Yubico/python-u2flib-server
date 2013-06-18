@@ -56,7 +56,8 @@ class MultiEnroll(object):
 
         for response in responses:
             version = response['version']
-            assert version in self.enrolls, "Unsupported version!"
+            if version not in self.enrolls:
+                raise ValueError("Unsupported version!")
             bindings.append(self.enrolls[version].bind(response))
 
         return bindings
