@@ -51,7 +51,6 @@ DATA = urlsafe_b64decode(DATA)
 def test_enroll_static_data():
     enrollment = u2f.enrollment()
     enroll_request = enrollment.json
-    print "enroll: %r" % enroll_request
 
     # GNUBBY STUFF
     request = json.loads(enroll_request)
@@ -91,39 +90,23 @@ def test_challenge_soft_u2f():
     response = device.register(enrollment.json)
     binding = enrollment.bind(response, ORIGIN)
 
-    challenge = binding.make_challenge()
-    response = device.getAssertion(challenge.json)
+    challenge1 = binding.make_challenge()
+    challenge2 = binding.make_challenge()
 
-    assert challenge.validate(response)
+    response2 = device.getAssertion(challenge2.json)
+    response1 = device.getAssertion(challenge1.json)
 
+    assert challenge1.validate(response1)
+    assert challenge2.validate(response2)
 
-# Not completed yet
-def todo_challenge():
-    challenge = binding.make_challenge()
-    chal_request = json.loads(challenge.json)
-    browser_data = {
-        "typ": "navigator.id.getAssertion",
-        "cid_pubkey": {
-            "alg": "EC",
-            "crv": "P 256",
-            "x": "DLFK4398374DKFDF...",
-            "y": "DF3408DFLKjdfsdf..."
-        },
-        "server_pubkey": {
-            "alg": "RSA",
-            "mod": "LDKFJ3094...",
-            "exp": "AQAB"
-        },
-        "challenge": chal_request['challenge']
-    }
-    # TODO: Create the signature
+    try:
+    #    challenge1.validate(response2)
+        assert False, "Incorrect validation should fail!"
+    except:
+        pass
 
-    response = {
-        "origin": ORIGIN,
-        "browser_data": urlsafe_b64encode(json.dumps(browser_data)),
-        "cpk": chal_request['cpk'],
-        "counter": "3437467",
-        "touch": "255",
-        "signature": "293478LFJDFKJ..."
-    }
-    assert challenge.validate(response)
+    try:
+    #    challenge2.validate(response1)
+        assert False, "Incorrect validation should fail!"
+    except:
+        pass

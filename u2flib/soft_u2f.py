@@ -25,11 +25,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from M2Crypto import EC, BIO, EVP
-from base64 import urlsafe_b64encode, urlsafe_b64decode, b64decode, b64encode
-from hashlib import sha256
-from cStringIO import StringIO
-from pyasn1.codec.der import decoder, encoder
+from M2Crypto import EC, BIO
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 from u2flib import u2f
 import json
 import os
@@ -104,7 +101,7 @@ class SoftU2FDevice(object):
             "dh": yd
         }
 
-    def getAssertion(self, params, browser_data={},
+    def getAssertion(self, params, browser_data=None,
                      origin="https://www.example.com", touch=False):
         """
         params = {
@@ -127,7 +124,12 @@ class SoftU2FDevice(object):
         # Unwrap:
         privu, km, ho = self.keys[hk]
 
-        browser_data['challenge'] = params['challenge']
+        if browser_data is None:
+            browser_data = {}
+        if not 'typ' in browser_data:
+            browser_data['typ'] = 'navigator.id.getAssertion'
+        if not 'challenge' in browser_data:
+            browser_data['challenge'] = params['challenge']
         self.counter += 1
 
         #Create signature

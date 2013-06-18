@@ -197,7 +197,8 @@ class U2FChallenge(object):
     def __init__(self, binding):
         self.binding = binding
         self.cpk = os.urandom(16)
-        self.challenge = os.urandom(16)
+        self.challenge = os.urandom(32)
+        print "Challenge generated: %s" % self.challenge.encode('hex')
 
     def validate_browser_data(self, browser_data):
         """
@@ -217,8 +218,10 @@ class U2FChallenge(object):
             "challenge": "JJ498DLFKEER243...", // from JS call parameter
         }
         """
+        print 'Got challenge: %s' % urlsafe_b64decode(browser_data['challenge'].encode('utf-8')).encode('hex')
+        print 'My  challenge: %s' % self.challenge.encode('hex')
         assert urlsafe_b64decode(browser_data['challenge'].encode('utf-8')) \
-            == self.challenge
+            == self.challenge, "Incorrect challenge!"
         # TODO: Assert more stuff
 
     def validate(self, response):
@@ -260,7 +263,6 @@ class U2FChallenge(object):
             'version': 'v0',
             'challenge': urlsafe_b64encode(self.challenge),
             'key_handle': urlsafe_b64encode(self.binding.hk),
-            # cpk currently not used
             'cpk': {
                 'clear': urlsafe_b64encode(self.cpk),
                 'encrypted': urlsafe_b64encode(encrypt(self.cpk,
