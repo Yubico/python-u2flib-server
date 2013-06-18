@@ -44,7 +44,7 @@ class MultiEnroll(object):
     @property
     def json(self):
         data = {}
-        for key, enroll in self.enrolls.items():
+        for enroll in self.enrolls.values():
             data.update(json.loads(enroll.json))
         return json.dumps(data)
 
