@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from u2flib import u2f
+from u2flib.soft_u2f import SoftU2FDevice
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 from M2Crypto import EC
 import json
@@ -47,13 +48,14 @@ DATA = "BHQVuSI8ZM6QgykBsguyedZ7gxIXUJEMYJpRHrglnHv3BzON3h5knF-cAw7Zg1G4" +\
 DATA = urlsafe_b64decode(DATA)
 
 
-def test_enroll():
+def test_enroll_static_data():
     enrollment = u2f.enrollment()
     enroll_request = enrollment.json
+    print "enroll: %r" % enroll_request
 
     # GNUBBY STUFF
     request = json.loads(enroll_request)
-    ys = request['v1'].encode('utf-8')
+    ys = request['v0'].encode('utf-8')
 
     dh = EC.gen_params(u2f.CURVE)
     dh.gen_key()
@@ -64,11 +66,21 @@ def test_enroll():
     grm = urlsafe_b64encode(u2f.encrypt(DATA, km))
 
     response = {
-        "version": "v1",
+        "version": "v0",
         "grm": grm,
         "dh": yd
     }
-    print 'Response: %r' % response
+    binding = enrollment.bind(response, ORIGIN)
+    assert binding
+
+
+def test_enroll_soft_u2f():
+    device = SoftU2FDevice()
+
+    enrollment = u2f.enrollment()
+
+    response = device.register(enrollment.json)
+
     binding = enrollment.bind(response, ORIGIN)
     assert binding
 

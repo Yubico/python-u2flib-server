@@ -119,7 +119,7 @@ class U2FEnrollment(object):
     def bind(self, response, origin):
         """
         response = {
-            "version": "v1",
+            "version": "v0",
             "iv": "DOsdfoi2KD28",
             "grm": "32498DLFKEER243...",
             "dh": "BFJ2934FLKDFJ..."
@@ -127,9 +127,9 @@ class U2FEnrollment(object):
         """
         if isinstance(response, basestring):
             response = json.loads(response)
-        assert response['version'].encode('utf-8') == 'v1'
+        assert response['version'].encode('utf-8') == 'v0'
 
-        ho = H(origin.encode('punycode'))
+        ho = H(origin.lower().encode('punycode'))
 
         if 'iv' in response:
             iv = urlsafe_b64decode(response['iv'].encode('utf-8'))
@@ -147,10 +147,6 @@ class U2FEnrollment(object):
         cert, signature = decoder.decode(grm)
 
         digest = H(ho + kq + hk)
-        print 'ho: %s' % ho.encode('hex')
-        print 'kq: %s' % kq.encode('hex')
-        print 'hk: %s' % hk.encode('hex')
-        print 'Digest: %s' % digest.encode('hex')
         self.verify_csr_signature(cert, digest, signature)
         self.verify_cert(cert)
 
@@ -160,12 +156,12 @@ class U2FEnrollment(object):
 
     @property
     def json(self):
-        return json.dumps({'v1': self.ys})
+        return json.dumps({'v0': self.ys})
 
     @property
     def der(self):
         bio = BIO.MemoryBuffer()
-        self.dh.save_key(bio, None)
+        self.dh.save_key_bio(bio, None)
         # Convert from PEM format
         der = b64decode(bio.read_all().splitlines()[1:-1])
         return der
@@ -260,7 +256,7 @@ class U2FChallenge(object):
     @property
     def json(self):
         return json.dumps({
-            'version': 'v1',
+            'version': 'v0',
             'challenge': urlsafe_b64encode(self.challenge),
             'key_handle': urlsafe_b64encode(self.binding.hk),
             # cpk currently not used
