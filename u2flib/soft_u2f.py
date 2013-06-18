@@ -105,7 +105,7 @@ class SoftU2FDevice(object):
         }
 
     def getAssertion(self, params, browser_data={},
-                     origin="https://www.example.com"):
+                     origin="https://www.example.com", touch=False):
         """
         params = {
             "key_handle": "PCbxwb-Al...",
@@ -121,7 +121,7 @@ class SoftU2FDevice(object):
             params = json.loads(params)
 
         assert params['version'] == 'v0', "Unsupported version!"
-        hk = urlsafe_b64decode(params['key_handle'])
+        hk = urlsafe_b64decode(params['key_handle'].encode('utf-8'))
         assert hk in self.keys, "Unknown key handle!"
 
         # Unwrap:
@@ -130,13 +130,22 @@ class SoftU2FDevice(object):
         browser_data['challenge'] = params['challenge']
         self.counter += 1
 
-        signature = None
+        #Create signature
+        browser_data = urlsafe_b64encode(json.dumps(browser_data))
+        Hb = u2f.H(browser_data)
+        cpk = urlsafe_b64decode(params['cpk']['clear'].encode('utf8'))
+        touch_val = 255 if touch else 0
+        touch = struct.pack('>B', touch_val)
+        counter = struct.pack('>I', self.counter)
+
+        digest = u2f.H(ho + Hb + cpk + touch + counter)
+        signature = privu.sign_dsa_asn1(digest)
 
         return {
             "origin": origin.lower().encode('punycode'),
-            "browser_data": urlsafe_b64encode(json.dumps(browser_data)),
+            "browser_data": browser_data,
             "cpk": params['cpk']['clear'],
             "counter": str(self.counter),
-            "touch": "255",
+            "touch": str(touch_val),
             "signature": urlsafe_b64encode(signature)
         }

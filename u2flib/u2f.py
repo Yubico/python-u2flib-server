@@ -217,7 +217,8 @@ class U2FChallenge(object):
             "challenge": "JJ498DLFKEER243...", // from JS call parameter
         }
         """
-        assert urlsafe_b64decode(browser_data['challenge']) == self.challenge
+        assert urlsafe_b64decode(browser_data['challenge'].encode('utf-8')) \
+            == self.challenge
         # TODO: Assert more stuff
 
     def validate(self, response):
@@ -249,7 +250,7 @@ class U2FChallenge(object):
         assert self.binding.kq.verify_dsa_asn1(digest, signature), \
             "Signature verification failed!"
 
-        self.validate_browser_data(urlsafe_b64decode(browser_data))
+        self.validate_browser_data(json.loads(urlsafe_b64decode(browser_data)))
 
         return True
 

@@ -85,6 +85,18 @@ def test_enroll_soft_u2f():
     assert binding
 
 
+def test_challenge_soft_u2f():
+    device = SoftU2FDevice()
+    enrollment = u2f.enrollment()
+    response = device.register(enrollment.json)
+    binding = enrollment.bind(response, ORIGIN)
+
+    challenge = binding.make_challenge()
+    response = device.getAssertion(challenge.json)
+
+    assert challenge.validate(response)
+
+
 # Not completed yet
 def todo_challenge():
     challenge = binding.make_challenge()
