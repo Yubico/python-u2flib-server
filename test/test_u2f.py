@@ -100,13 +100,15 @@ def test_challenge_soft_u2f():
     assert challenge2.validate(response2)
 
     try:
-    #    challenge1.validate(response2)
-        assert False, "Incorrect validation should fail!"
+        challenge1.validate(response2)
     except:
         pass
+    else:
+        assert False, "Incorrect validation should fail!"
 
     try:
-    #    challenge2.validate(response1)
-        assert False, "Incorrect validation should fail!"
+        challenge2.validate(response1)
     except:
         pass
+    else:
+        assert False, "Incorrect validation should fail!"
