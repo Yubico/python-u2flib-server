@@ -25,7 +25,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib import u2f
+from u2flib import u2f_v0 as u2f
 from u2flib.soft_u2f import SoftU2FDevice
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 from M2Crypto import EC
@@ -49,7 +49,7 @@ DATA = urlsafe_b64decode(DATA)
 
 
 def test_enroll_static_data():
-    enrollment = u2f.enrollment()
+    enrollment = u2f.enrollment(ORIGIN)
     enroll_request = enrollment.json
 
     # GNUBBY STUFF
@@ -62,33 +62,33 @@ def test_enroll_static_data():
     yd = urlsafe_b64encode(der[-65:])
 
     km = u2f.P2DES(dh, ys)
-    grm = urlsafe_b64encode(u2f.encrypt(DATA, km))
+    grm = urlsafe_b64encode(u2f.E(DATA, km))
 
     response = {
         "version": "v0",
         "grm": grm,
         "dh": yd
     }
-    binding = enrollment.bind(response, ORIGIN)
+    binding = enrollment.bind(response)
     assert binding
 
 
 def test_enroll_soft_u2f():
     device = SoftU2FDevice()
 
-    enrollment = u2f.enrollment()
+    enrollment = u2f.enrollment(ORIGIN)
 
     response = device.register(enrollment.json)
 
-    binding = enrollment.bind(response, ORIGIN)
+    binding = enrollment.bind(response)
     assert binding
 
 
 def test_challenge_soft_u2f():
     device = SoftU2FDevice()
-    enrollment = u2f.enrollment()
+    enrollment = u2f.enrollment(ORIGIN)
     response = device.register(enrollment.json)
-    binding = enrollment.bind(response, ORIGIN)
+    binding = enrollment.bind(response)
 
     challenge1 = binding.make_challenge()
     challenge2 = binding.make_challenge()
@@ -112,3 +112,10 @@ def test_challenge_soft_u2f():
         pass
     else:
         assert False, "Incorrect validation should fail!"
+
+
+def test_multi_enroll():
+    from u2flib.u2f import enrollment as multi_enroll
+    enrollment = multi_enroll(ORIGIN)
+    enroll_req = enrollment.json
+    assert enroll_req

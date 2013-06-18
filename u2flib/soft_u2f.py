@@ -27,7 +27,7 @@
 
 from M2Crypto import EC, BIO
 from base64 import urlsafe_b64encode, urlsafe_b64decode
-from u2flib import u2f
+from u2flib import u2f_v0 as u2f
 import json
 import os
 import struct
@@ -93,7 +93,7 @@ class SoftU2FDevice(object):
         signature = cert_priv.sign_dsa_asn1(digest)
 
         data = kq + hk + cert + signature
-        cdata = urlsafe_b64encode(u2f.encrypt(data, km))
+        cdata = urlsafe_b64encode(u2f.E(data, km))
 
         return {
             "version": 'v0',

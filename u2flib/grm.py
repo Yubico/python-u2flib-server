@@ -25,52 +25,20 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import json
-from u2flib.u2f_v0 import enrollment as enroll_v0
-from u2flib.u2f_v1 import enrollment as enroll_v1
+__all__ = ['GRM']
 
-VERSIONS = {
-    'v0': enroll_v0,
-    'v1': enroll_v1
-}
+from u2flib.utils import pub_key_from_der
 
 
-class MultiEnroll(object):
-    def __init__(self, origin, versions=VERSIONS.keys()):
-        self.enrolls = {}
-        for version in versions:
-            self.enrolls[version] = VERSIONS[version](origin)
+class GRM(object):
+    def __init__(self, data):
+        #TODO parse DER encoded data
+        self.ho = None
+        self.kq_der = None
+        self.kq = pub_key_from_der(self.kq_der)
+        self.hk = None
+        self.csr = None
+        self.signature = None
 
-    @property
-    def json(self):
-        data = {}
-        for key, enroll in self.enrolls.items():
-            data.update(json.loads(enroll.json))
-        return json.dumps(data)
-
-    def bind(self, responses):
-        if isinstance(responses, basestring):
-            responses = json.loads(responses)
-
-        bindings = []
-
-        for response in responses:
-            version = response['version']
-            assert version in self.enrolls, "Unsupported version!"
-            bindings.append(self.enrolls[version].bind(response))
-
-        return bindings
-
-    @property
-    def der(self):
-        # TODO
-        return ""
-
-    @classmethod
-    def from_der(der):
-        # TODO
-        return MultiEnroll(None)
-
-
-enrollment = MultiEnroll.__call__
-enrollment_from_der = MultiEnroll.from_der
+    def verify_csr_signature(self):
+        assert False, 'Attest signature verification failed!'
