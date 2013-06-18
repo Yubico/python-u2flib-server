@@ -154,67 +154,36 @@ class U2FBinding(object):
 class U2FChallenge(object):
     def __init__(self, binding):
         self.binding = binding
-        self.cpk = os.urandom(16)
         self.challenge = os.urandom(32)
-
-    def validate_browser_data(self, browser_data):
-        """
-        browser_data = {
-            "typ": "navigator.id.getAssertion",
-            "cid_pubkey": { // channel id pubkey
-                "alg": "EC",
-                "crv": "P 256",
-                "x": "DLFK4398374DKFDF...",
-                "y": "DF3408DFLKjdfsdf..."
-                },
-                "server_pubkey": { // TLS server side pubkey
-                    "alg": "RSA",
-                    "mod": "LDKFJ3094...",
-                    "exp": "AQAB"
-                },
-            "challenge": "JJ498DLFKEER243...", // from JS call parameter
-        }
-        """
-        assert browser_data['typ'] == "navigator.id.getAssertion", \
-            "Incorrect type!"
-        assert urlsafe_b64decode(browser_data['challenge'].encode('utf-8')) \
-            == self.challenge, "Incorrect challenge!"
 
     def validate(self, response):
         """
         response = {
-            "origin": "http://...",
-            "browser_data": "3984dFSLDDFLJ...",
-            "cpk": "LDFKJ38FDSKLF...",
-            "counter": "3437467",
             "touch": "255",
-            "signature": "293478LFJDFKJ..."
+            "enc": "ADJKSDFS..." #rnd, ctr, sig
         }
         """
         if isinstance(response, basestring):
             response = json.loads(response)
 
-        # This doesn't provide anything as both are verified in the signature.
-        assert urlsafe_b64decode(response['cpk'].encode('utf-8')) == self.cpk
-        assert H(response['origin'].encode('utf-8')) == self.binding.ho
+        # Decrypt response data
+        data = D(urlsafe_b64decode(response['enc'].encode('utf-8')),
+                 self.binding.km)
+        rnd = data[:4]
+        ctr = data[4:8]
+        signature = data[8:]
 
         # Create hash for signature verification:
-        browser_data = response['browser_data'].encode('utf-8')
-        Hb = H(browser_data)
         touch_int = int(response['touch'])
         touch = struct.pack('>B', touch_int)
-        counter_int = int(response['counter'])
-        counter = struct.pack('>I', counter_int)
+        counter_int = struct.unpack('>I', ctr)[0]
 
-        digest = H(self.binding.ho + Hb + self.cpk + touch + counter)
-        signature = urlsafe_b64decode(response['signature'].encode('utf-8'))
+        digest = H(self.binding.ho + touch + rnd + ctr + self.challenge)
+
         assert self.binding.kq.verify_dsa_asn1(digest, signature), \
             "Signature verification failed!"
 
-        browser_data = json.loads(urlsafe_b64decode(browser_data))
-        self.validate_browser_data(browser_data)
-
-        return browser_data, counter_int, touch_int
+        return counter_int, touch_int
 
     @property
     def json(self):
@@ -222,11 +191,6 @@ class U2FChallenge(object):
             'version': VERSION,
             'challenge': urlsafe_b64encode(self.challenge),
             'key_handle': urlsafe_b64encode(self.binding.hk),
-            'cpk': {
-                'clear': urlsafe_b64encode(self.cpk),
-                'encrypted': urlsafe_b64encode(E(self.cpk,
-                                                 self.binding.km))
-            }
         })
 
     @property

@@ -53,6 +53,10 @@ s5nPludXT/J4SmtvXW92lsuQ/hQi3Z8hhw==
 
 
 class SoftU2FDevice(object):
+    """
+    This simulates the U2F browser API with a soft U2F device connected.
+    It can be used for testing.
+    """
     def __init__(self):
         self.keys = {}
         self.counter = 0
@@ -101,13 +105,51 @@ class SoftU2FDevice(object):
             "dh": yd
         }
 
-    def getAssertion(self, params, browser_data=None,
-                     origin="https://www.example.com", touch=False):
+    def getAssertionV0(self, params,
+                       origin="https://www.example.com", touch=False):
+        """
+        params = {
+            "version": "v0",
+            "key_handle": "PCbxwb-Al...",
+            "challenge": "gaj0GUFl15...",
+        }
+        """
+        if isinstance(params, basestring):
+            params = json.loads(params)
+
+        assert params['version'] == 'v0', "Unsupported version!"
+        hk = urlsafe_b64decode(params['key_handle'].encode('utf-8'))
+        assert hk in self.keys, "Unknown key handle!"
+
+        # Unwrap:
+        privu, km, ho = self.keys[hk]
+
+        self.counter += 1
+
+        # Create signature
+        touch_val = 255 if touch else 0
+        touch = struct.pack('>B', touch_val)
+        counter = struct.pack('>I', self.counter)
+        rnd = os.urandom(4)
+        challenge = urlsafe_b64decode(params['challenge'].encode('utf-8'))
+
+        digest = u2f.H(ho + touch + rnd + counter + challenge)
+        signature = privu.sign_dsa_asn1(digest)
+
+        enc = u2f.E(rnd + counter + signature, km)
+
+        return {
+            "touch": str(touch_val),
+            "enc": urlsafe_b64encode(enc)
+        }
+
+    def getAssertionV1(self, params, browser_data=None,
+                       origin="https://www.example.com", touch=False):
         """
         params = {
             "key_handle": "PCbxwb-Al...",
             "challenge": "gaj0GUFl15...",
-            "version": "v0",
+            "version": "v1",
             "cpk": {
                 "encrypted": "iMDeGDDI...",
                 "clear": "DZLX7FrEb..."
@@ -117,7 +159,7 @@ class SoftU2FDevice(object):
         if isinstance(params, basestring):
             params = json.loads(params)
 
-        assert params['version'] == 'v0', "Unsupported version!"
+        assert params['version'] == 'v1', "Unsupported version!"
         hk = urlsafe_b64decode(params['key_handle'].encode('utf-8'))
         assert hk in self.keys, "Unknown key handle!"
 
@@ -132,7 +174,7 @@ class SoftU2FDevice(object):
             browser_data['challenge'] = params['challenge']
         self.counter += 1
 
-        #Create signature
+        # Create signature
         browser_data = urlsafe_b64encode(json.dumps(browser_data))
         Hb = u2f.H(browser_data)
         cpk = urlsafe_b64decode(params['cpk']['clear'].encode('utf8'))
@@ -151,3 +193,17 @@ class SoftU2FDevice(object):
             "touch": str(touch_val),
             "signature": urlsafe_b64encode(signature)
         }
+
+    def getAssertion(self, params, *args, **kwargs):
+        if isinstance(params, basestring):
+            p = json.loads(params)
+        else:
+            p = params
+        version = p['version']
+
+        if version == 'v0':
+            return self.getAssertionV0(params, *args, **kwargs)
+        elif version == 'v1':
+            return self.getAssertionV1(params, *args, **kwargs)
+        else:
+            raise ValueError('Unsupported version!')
