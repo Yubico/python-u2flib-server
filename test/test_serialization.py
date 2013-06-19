@@ -26,7 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from u2flib import u2f_v0 as u2f
-from base64 import urlsafe_b64decode, urlsafe_b64encode
+from base64 import urlsafe_b64decode
 
 BINDING_DER = urlsafe_b64decode(
     "ab3lk0OXHuYB-zTld7lWuDxWGFFCFFmatP2MXBMOvrBmffdwB2P5_qEa1qcAbNNp" +
