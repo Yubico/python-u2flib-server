@@ -13,7 +13,8 @@ def load_binding(user):
         user.attributes['_u2f_binding_2_'] + \
         user.attributes['_u2f_binding_3_'] + \
         user.attributes['_u2f_binding_4_'] + \
-        user.attributes['_u2f_binding_5_']
+        user.attributes['_u2f_binding_5_'] + \
+        user.attributes['_u2f_binding_6_']
     return binding_from_der(b64decode(binding_data))
 
 
@@ -93,7 +94,8 @@ class U2FServer(object):
         user.attributes['_u2f_binding_2_'] = binding_data[256:384]
         user.attributes['_u2f_binding_3_'] = binding_data[384:512]
         user.attributes['_u2f_binding_4_'] = binding_data[512:640]
-        user.attributes['_u2f_binding_5_'] = binding_data[640:]
+        user.attributes['_u2f_binding_5_'] = binding_data[640:768]
+        user.attributes['_u2f_binding_6_'] = binding_data[768:]
         return json.dumps({
             'username': username[4:],
             'origin': self.origin,
