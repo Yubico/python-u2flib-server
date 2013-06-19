@@ -32,6 +32,7 @@ from u2flib.utils import pub_key_from_der
 
 class GRM(object):
     def __init__(self, data):
+        self.data
         #TODO parse DER encoded data
         self.ho = None
         self.kq_der = None
@@ -42,3 +43,8 @@ class GRM(object):
 
     def verify_csr_signature(self):
         raise Exception('Attest signature verification failed!')
+
+    @property
+    def der(self):
+        # TODO: Recreate DER encoded data.
+        return self.data

@@ -39,16 +39,15 @@ __all__ = ['U2FEnrollment', 'U2FBinding', 'U2FChallenge']
 VERSION = 'v0'
 CURVE = V1.CURVE
 CIPHER = V1.CIPHER
+P2DES = V1.P2DES
+H = V1.H
+E = V1.E
+D = V1.D
 PEM_PRIVATE_KEY = """
 -----BEGIN EC PRIVATE KEY-----
 %s
 -----END EC PRIVATE KEY-----
 """
-
-P2DES = V1.P2DES
-H = V1.H
-E = V1.E
-D = V1.D
 
 
 class GRM(object):
@@ -60,6 +59,7 @@ class GRM(object):
     SIZE_GRM = 384 + 72  # MAX_CERT + MAX_SIG
 
     def __init__(self, data, ho):
+        self.data = data
         self.ho = ho
         self.kq_der = data[:self.SIZE_KQ]
         self.kq = pub_key_from_der(self.kq_der)
@@ -74,10 +74,21 @@ class GRM(object):
         if not attest_key.verify_dsa_asn1(digest, self.signature):
             raise Exception('Attest signature verification failed!')
 
+    @property
+    def der(self):
+        return self.ho + self.data
+
+    @staticmethod
+    def from_der(der):
+        return GRM(der[32:], der[:32])
+
 
 class U2FEnrollment(object):
-    def __init__(self, origin, dh=None):
-        self.ho = H(origin.lower().encode('punycode'))
+    def __init__(self, origin, dh=None, origin_as_hash=False):
+        if origin_as_hash:
+            self.ho = origin
+        else:
+            self.ho = H(origin.lower().encode('punycode'))
 
         if dh:
             if not isinstance(dh, EC.EC):
@@ -120,15 +131,16 @@ class U2FEnrollment(object):
         bio = BIO.MemoryBuffer()
         self.dh.save_key_bio(bio, None)
         # Convert from PEM format
-        der = b64decode(bio.read_all().splitlines()[1:-1])
-        return der
+        der = b64decode(''.join(bio.read_all().splitlines()[1:-1]))
+        return self.ho + der
 
-    @classmethod
+    @staticmethod
     def from_der(der):
         # Convert to PEM format
-        pem = PEM_PRIVATE_KEY % b64_split(der)
+        ho = der[:32]
+        pem = PEM_PRIVATE_KEY % b64_split(der[32:])
         dh = EC.load_key_bio(BIO.MemoryBuffer(pem))
-        return U2FEnrollment(dh)
+        return U2FEnrollment(ho, dh, origin_as_hash=True)
 
 
 class U2FBinding(object):
@@ -143,19 +155,27 @@ class U2FBinding(object):
     def make_challenge(self):
         return U2FChallenge(self)
 
+    def challenge_from_der(self, der):
+        return U2FChallenge.from_der(self, der)
+
     @property
     def der(self):
-        return ""
+        # Not actually DER, but it will do for v0.
+        return self.km + self.grm.der
 
-    @classmethod
+    @staticmethod
     def from_der(der):
-        return U2FBinding()
+        # Again, not actually DER
+        return U2FBinding(GRM.from_der(der[16:]), der[:16])
 
 
 class U2FChallenge(object):
-    def __init__(self, binding):
+    def __init__(self, binding, challenge=None):
         self.binding = binding
-        self.challenge = os.urandom(32)
+        if challenge is None:
+            self.challenge = os.urandom(32)
+        else:
+            self.challenge = challenge
 
     def validate(self, response):
         """
@@ -196,14 +216,15 @@ class U2FChallenge(object):
 
     @property
     def der(self):
-        # TODO
-        return ""
+        # Not actually DER, but it will do for v0.
+        return self.challenge
 
-    @classmethod
-    def from_der(der):
-        # TODO
-        return U2FChallenge(None)
+    @staticmethod
+    def from_der(binding, der):
+        # Again, not actually DER
+        return U2FChallenge(binding, der)
 
 
 enrollment = U2FEnrollment.__call__
 enrollment_from_der = U2FEnrollment.from_der
+binding_from_der = U2FBinding.from_der

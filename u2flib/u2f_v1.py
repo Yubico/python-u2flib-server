@@ -244,3 +244,4 @@ class U2FChallenge(object):
 
 enrollment = U2FEnrollment.__call__
 enrollment_from_der = U2FEnrollment.from_der
+binding_from_der = U2FBinding.from_der
