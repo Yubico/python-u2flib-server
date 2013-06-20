@@ -87,13 +87,13 @@ def test_enroll_soft_u2f():
 def test_challenge_soft_u2f():
     device = SoftU2FDevice()
     enrollment = u2f.enrollment(ORIGIN)
-    response = json.dumps(device.register(enrollment.json))
+    response = device.register(enrollment.json)
     binding = enrollment.bind(response)
 
     challenge1 = binding.make_challenge()
     challenge2 = binding.make_challenge()
 
-    response2 = json.dumps(device.getAssertion(challenge2.json))
+    response2 = device.getAssertion(challenge2.json)
     response1 = device.getAssertion(challenge1.json)
 
     assert challenge1.validate(response1)
@@ -124,7 +124,7 @@ def test_multi_enroll():
     response1 = device1.register(enrollment.json)
     response2 = device2.register(enrollment.json)
 
-    response = json.dumps([response1, response2])
+    response = "[%s, %s]" % (response1, response2)
     print response
 
     bindings = enrollment.bind(response)

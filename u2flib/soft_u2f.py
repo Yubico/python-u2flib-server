@@ -100,11 +100,11 @@ class SoftU2FDevice(object):
         data = kq + hk + cert + signature
         cdata = urlsafe_b64encode(u2f.E(data, km))
 
-        return {
+        return json.dumps({
             "version": 'v0',
             "grm": cdata,
             "dh": yd
-        }
+        })
 
     def getAssertionV0(self, params,
                        origin="https://www.example.com", touch=False):
@@ -141,10 +141,10 @@ class SoftU2FDevice(object):
 
         enc = u2f.E(rnd + counter + signature, km)
 
-        return {
+        return json.dumps({
             "touch": str(touch_val),
             "enc": urlsafe_b64encode(enc)
-        }
+        })
 
     def getAssertionV1(self, params, browser_data=None,
                        origin="https://www.example.com", touch=False):
@@ -190,14 +190,14 @@ class SoftU2FDevice(object):
         digest = u2f.H(ho + Hb + cpk + touch + counter)
         signature = privu.sign_dsa_asn1(digest)
 
-        return {
+        return json.dumps({
             "origin": origin.lower().encode('punycode'),
             "browser_data": browser_data,
             "cpk": params['cpk']['clear'],
             "counter": str(self.counter),
             "touch": str(touch_val),
             "signature": urlsafe_b64encode(signature)
-        }
+        })
 
     def getAssertion(self, params, *args, **kwargs):
         if isinstance(params, basestring):
