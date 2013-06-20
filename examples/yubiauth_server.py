@@ -47,14 +47,19 @@ class U2FServer(object):
     """
     @wsgify
     def __call__(self, request):
+        self.origin = get_origin(request.environ)
+        page = request.path_info_pop()
+
+        # To be able to see what the server considers its origin to be:
+        if page == 'origin':
+            return self.origin
+
         with YubiAuth() as auth:
             try:
                 username = 'u2f_' + request.params['username']
                 password = request.params['password']
                 data = request.params.get('data', None)
-                page = request.path_info_pop()
 
-                self.origin = get_origin(request.environ)
                 self.auth = auth
                 if page == 'enroll':
                     return self.enroll(username, password)
