@@ -91,6 +91,11 @@ class U2FServer(object):
         enroll_data = user.attributes['_u2f_enroll_0_'] + \
             user.attributes['_u2f_enroll_1_']
         enroll = enrollment_from_der(b64decode(enroll_data))
+        data = json.loads(data)
+        if isinstance(data, list):
+            if len(data) != 1:
+                raise ValueError("Only single device enrollment supported!")
+            data = data[0]
         binding = enroll.bind(data)
         binding_data = b64encode(binding.der)
         # YubiAuth needs to be able to store blobs, srsly.
