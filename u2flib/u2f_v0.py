@@ -39,7 +39,6 @@ __all__ = ['U2FEnrollment', 'U2FBinding', 'U2FChallenge']
 VERSION = 'v0'
 CURVE = V1.CURVE
 CIPHER = V1.CIPHER
-P2DES = V1.P2DES
 H = V1.H
 E = V1.E
 D = V1.D
@@ -48,6 +47,13 @@ PEM_PRIVATE_KEY = """
 %s
 -----END EC PRIVATE KEY-----
 """
+
+
+def P2DES(priv, pub):
+    # P2DES for v0 uses the least significant bytes, whereas v1 uses the most
+    # significant bytes!
+    pub_raw = pub_key_from_der(urlsafe_b64decode(pub))
+    return priv.compute_dh_key(pub_raw)[-16:]
 
 
 class GRM(object):
