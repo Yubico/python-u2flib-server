@@ -88,7 +88,7 @@ class SoftU2FDevice(object):
 
         # Store
         hk = os.urandom(64)
-        ho = u2f.H(origin.lower().encode('punycode'))
+        ho = u2f.H(origin.encode('idna'))
         self.keys[hk] = (privu, km, ho)
 
         # Attestation signature
