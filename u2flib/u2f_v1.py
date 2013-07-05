@@ -73,8 +73,11 @@ def D(ctext, key, iv=DEFAULT_IV):
 
 
 class U2FEnrollment(object):
+    """
+    origin needs to be correctly punyencoded, or already hashed.
+    """
     def __init__(self, origin, dh=None):
-        self.ho = H(origin.lower().encode('punycode'))
+        self.ho = H(origin.lower())
 
         if dh:
             if not isinstance(dh, EC.EC):
