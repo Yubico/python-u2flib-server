@@ -76,7 +76,7 @@ class U2FServer(object):
 
     def enroll(self, username, password):
         try:
-            user = self._get_user(username, password)
+            user = self.auth.get_user(username)
             user.set_password(password)
         except:
             user = self.auth.create_user(username, password)
