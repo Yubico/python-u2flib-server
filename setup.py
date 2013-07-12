@@ -39,7 +39,7 @@ setup(
     license='BSD 2 clause',
     packages=['u2flib'],
     setup_requires=['nose>=1.0'],
-    install_requires=['M2Crypto', 'pyasn1'],
+    install_requires=['M2Crypto'],
     test_suite='nose.collector',
     tests_require=[''],
     cmdclass={'release': release},

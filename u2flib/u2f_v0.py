@@ -25,9 +25,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from M2Crypto import EC, BIO
+from M2Crypto import EC, BIO, X509
 from base64 import urlsafe_b64encode, urlsafe_b64decode, b64decode
-from pyasn1.codec.der import decoder, encoder
 from u2flib import u2f_v1 as V1
 from u2flib.utils import b64_split, pub_key_from_der
 import json
@@ -72,12 +71,14 @@ class GRM(object):
         self.hk = data[self.SIZE_KQ:(self.SIZE_KQ + self.SIZE_HK)]
         rest = data[(self.SIZE_KQ + self.SIZE_HK):(
             self.SIZE_KQ + self.SIZE_HK + self.SIZE_GRM)]
-        self.csr, self.signature = decoder.decode(rest)
+        self.att_cert = X509.load_cert_der_string(rest)
+        self.signature = rest[len(self.att_cert.as_der()):]
 
     def verify_csr_signature(self):
-        digest = H(self.ho + self.kq_der + self.hk)
-        attest_key = EC.pub_key_from_der(encoder.encode(self.csr[0][6]))
-        if not attest_key.verify_dsa_asn1(digest, self.signature):
+        pubkey = self.att_cert.get_pubkey()
+        pubkey.verify_init()
+        pubkey.verify_update(self.ho + self.kq_der + self.hk)
+        if not pubkey.verify_final(self.signature) == 1:
             raise Exception('Attest signature verification failed!')
 
     @property
@@ -124,7 +125,7 @@ class U2FEnrollment(object):
                     km), self.ho)
 
         # TODO: Make sure verify_csr_signature works.
-        # grm.verify_csr_signature()
+        grm.verify_csr_signature()
         # TODO: Validate the certificate as well
 
         return U2FBinding(grm, km)
