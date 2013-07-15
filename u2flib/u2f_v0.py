@@ -76,9 +76,13 @@ class GRM(object):
 
     def verify_csr_signature(self):
         pubkey = self.att_cert.get_pubkey()
-        pubkey.verify_init()
-        pubkey.verify_update(self.ho + self.kq_der + self.hk)
-        if not pubkey.verify_final(self.signature) == 1:
+        #TODO: Figure out how to do this using the EVP API.
+        #pubkey.verify_init()
+        #pubkey.verify_update(self.ho + self.kq_der + self.hk)
+        #if not pubkey.verify_final(self.signature) == 1:
+        digest = H(self.ho + self.kq_der + self.hk)
+        pub_key = EC.pub_key_from_der(pubkey.as_der())
+        if not pub_key.verify_dsa_asn1(digest, self.signature) == 1:
             raise Exception('Attest signature verification failed!')
 
     @property
