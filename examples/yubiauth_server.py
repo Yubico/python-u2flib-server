@@ -1,21 +1,9 @@
 from yubiauth import YubiAuth
 from u2flib.u2f_v0 import enrollment, enrollment_from_der, binding_from_der
-from base64 import b64encode, b64decode
 from webob.dec import wsgify
 from webob import exc
 import json
 import traceback
-
-
-def load_binding(user):
-    binding_data = user.attributes['_u2f_binding_0_'] + \
-        user.attributes['_u2f_binding_1_'] + \
-        user.attributes['_u2f_binding_2_'] + \
-        user.attributes['_u2f_binding_3_'] + \
-        user.attributes['_u2f_binding_4_'] + \
-        user.attributes['_u2f_binding_5_'] + \
-        user.attributes['_u2f_binding_6_']
-    return binding_from_der(b64decode(binding_data))
 
 
 def get_origin(environ):
@@ -81,49 +69,42 @@ class U2FServer(object):
         except:
             user = self.auth.create_user(username, password)
         enroll = enrollment(self.origin)
-        enroll_data = b64encode(enroll.der)
-        user.attributes['_u2f_enroll_0_'] = enroll_data[:128]
-        user.attributes['_u2f_enroll_1_'] = enroll_data[128:]
+        user.attributes['_u2f_enroll_'] = enroll.der.encode('base64')
         return enroll.json
 
     def bind(self, username, password, data):
         user = self._get_user(username, password)
-        enroll_data = user.attributes['_u2f_enroll_0_'] + \
-            user.attributes['_u2f_enroll_1_']
-        enroll = enrollment_from_der(b64decode(enroll_data))
+        enroll_data = user.attributes['_u2f_enroll_'].decode('base64')
+        enroll = enrollment_from_der(enroll_data)
         data = json.loads(data)
         if isinstance(data, list):
             if len(data) != 1:
                 raise ValueError("Only single device enrollment supported!")
             data = data[0]
         binding = enroll.bind(data)
-        binding_data = b64encode(binding.der)
-        # YubiAuth needs to be able to store blobs, srsly.
-        user.attributes['_u2f_binding_0_'] = binding_data[:128]
-        user.attributes['_u2f_binding_1_'] = binding_data[128:256]
-        user.attributes['_u2f_binding_2_'] = binding_data[256:384]
-        user.attributes['_u2f_binding_3_'] = binding_data[384:512]
-        user.attributes['_u2f_binding_4_'] = binding_data[512:640]
-        user.attributes['_u2f_binding_5_'] = binding_data[640:768]
-        user.attributes['_u2f_binding_6_'] = binding_data[768:]
+        user.attributes['_u2f_binding_'] = binding.der.encode('base64')
         return json.dumps({
             'username': username[4:],
             'origin': self.origin,
+            'attest_cert': binding.grm.att_cert.as_pem()
         })
 
     def sign(self, username, password):
         user = self._get_user(username, password)
-        binding = load_binding(user)
+        binding_data = user.attributes['_u2f_binding_'].decode('base64')
+        binding = binding_from_der(binding_data)
+
         challenge = binding.make_challenge()
-        user.attributes['_u2f_challenge_'] = b64encode(challenge.der)
+        user.attributes['_u2f_challenge_'] = challenge.der.encode('base64')
         return challenge.json
 
     def verify(self, username, password, data):
         user = self._get_user(username, password)
-        binding = load_binding(user)
+        binding_data = user.attributes['_u2f_binding_'].decode('base64')
+        binding = binding_from_der(binding_data)
 
-        challenge = binding.challenge_from_der(
-            b64decode(user.attributes['_u2f_challenge_']))
+        challenge_data = user.attributes['_u2f_challenge_'].decode('base64')
+        challenge = binding.challenge_from_der(challenge_data)
         c, t = challenge.validate(data)
         return json.dumps({
             'touch': t,
