@@ -61,7 +61,6 @@ class GRM(object):
     """
     SIZE_KQ = 32 * 2 + 1  # EC Point size
     SIZE_HK = 64  # GN_WRAP_SIZE
-    SIZE_GRM = 384 + 72  # MAX_CERT + MAX_SIG
 
     def __init__(self, data, ho):
         self.data = data
@@ -69,8 +68,7 @@ class GRM(object):
         self.kq_der = data[:self.SIZE_KQ]
         self.kq = pub_key_from_der(self.kq_der)
         self.hk = data[self.SIZE_KQ:(self.SIZE_KQ + self.SIZE_HK)]
-        rest = data[(self.SIZE_KQ + self.SIZE_HK):(
-            self.SIZE_KQ + self.SIZE_HK + self.SIZE_GRM)]
+        rest = data[(self.SIZE_KQ + self.SIZE_HK):]
         self.att_cert = X509.load_cert_der_string(rest)
         self.signature = rest[len(self.att_cert.as_der()):]
 
