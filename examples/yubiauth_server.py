@@ -3,8 +3,23 @@
 # Proprietary code owned by Yubico AB.
 # No rights to modifications or redistribution.
 
+"""
+Example web server providing U2F enrollment and authentication. It can be run
+standalone, or by a WSGI container such as Apache with mod_wsgi.
+
+A YubiAuth installation is required to store users and their enrollment data.
+
+Enrollment will overwrite existing users. All users will have a u2f_ prefix
+added to their usernames.
+
+Any error will be returned as a stacktrace with a 400 response code.
+
+Note that this is intended for test/demo purposes, not production use!
+"""
+
 from yubiauth import YubiAuth
-from u2flib_server.u2f_v0 import enrollment, enrollment_from_der, binding_from_der
+from u2flib_server.u2f_v0 import (enrollment, enrollment_from_der,
+                                  binding_from_der)
 from webob.dec import wsgify
 from webob import exc
 import json
@@ -27,6 +42,7 @@ def get_origin(environ):
 
 
 class U2FServer(object):
+
     """
     Very basic server providing a REST API to enroll a U2F device with
     a YubiAuth user, and to perform a sign with the enrolled device.

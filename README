@@ -1,9 +1,20 @@
-u2flib
-=========
+u2flib-server
+=============
 
 Provides functionality for working with the server side aspects of the U2F
 protocol. Currently supports version 0, as implicitly defined by the
 GnubbyPilot implenentation.
+
+==Installation==
+
+u2flib-host is installable by running the following command:
+
+  $ python setup.py install
+
+==Example==
+See examples/yubiauth_server.py for a working example of a HTTP server for
+U2F enrollment/authentication.
+
 
 Version 0 message formats (all binary data is b64 encoded)
 =========
