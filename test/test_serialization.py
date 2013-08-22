@@ -3,7 +3,7 @@
 # Proprietary code owned by Yubico AB.
 # No rights to modifications or redistribution.
 
-from u2flib import u2f_v0 as u2f
+from u2flib_server import u2f_v0 as u2f
 from base64 import urlsafe_b64decode
 
 BINDING_DER = urlsafe_b64decode(

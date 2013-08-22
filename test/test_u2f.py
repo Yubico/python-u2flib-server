@@ -3,8 +3,8 @@
 # Proprietary code owned by Yubico AB.
 # No rights to modifications or redistribution.
 
-from u2flib import u2f_v0 as u2f
-from u2flib.soft_u2f import SoftU2FDevice
+from u2flib_server import u2f_v0 as u2f
+from u2flib_server.soft_u2f import SoftU2FDevice
 from base64 import urlsafe_b64encode
 from M2Crypto import EC
 import json
@@ -92,7 +92,7 @@ def test_challenge_soft_u2f():
 
 
 def test_multi_enroll():
-    from u2flib.u2f import enrollment as multi_enroll
+    from u2flib_server.u2f import enrollment as multi_enroll
     device1 = SoftU2FDevice()
     device2 = SoftU2FDevice()
 

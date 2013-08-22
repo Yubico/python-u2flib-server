@@ -4,7 +4,7 @@
 # No rights to modifications or redistribution.
 
 from yubiauth import YubiAuth
-from u2flib.u2f_v0 import enrollment, enrollment_from_der, binding_from_der
+from u2flib_server.u2f_v0 import enrollment, enrollment_from_der, binding_from_der
 from webob.dec import wsgify
 from webob import exc
 import json

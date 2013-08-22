@@ -5,8 +5,8 @@
 
 from M2Crypto import EC, BIO, X509
 from base64 import urlsafe_b64encode, urlsafe_b64decode, b64decode
-from u2flib import u2f_v1 as V1
-from u2flib.utils import b64_split, pub_key_from_der
+from u2flib_server import u2f_v1 as V1
+from u2flib_server.utils import b64_split, pub_key_from_der
 import json
 import os
 import struct

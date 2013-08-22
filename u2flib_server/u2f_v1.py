@@ -7,8 +7,8 @@ from M2Crypto import EC, BIO, EVP
 from base64 import urlsafe_b64encode, urlsafe_b64decode, b64decode
 from hashlib import sha256
 from cStringIO import StringIO
-from u2flib import GRM
-from u2flib.utils import update_all, zeropad, pub_key_from_der, b64_split
+from u2flib_server import GRM
+from u2flib_server.utils import update_all, zeropad, pub_key_from_der, b64_split
 import json
 import os
 import struct

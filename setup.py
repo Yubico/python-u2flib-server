@@ -15,7 +15,7 @@ setup(
     maintainer_email='ossmaint@yubico.com',
     url='https://github.com/Yubico/python-u2flib',
     license='proprietary',
-    packages=['u2flib'],
+    packages=['u2flib_server'],
     setup_requires=['nose>=1.0'],
     install_requires=['M2Crypto'],
     test_suite='nose.collector',

@@ -4,8 +4,8 @@
 # No rights to modifications or redistribution.
 
 import json
-from u2flib.u2f_v0 import enrollment as enroll_v0
-from u2flib.u2f_v1 import enrollment as enroll_v1
+from u2flib_server.u2f_v0 import enrollment as enroll_v0
+from u2flib_server.u2f_v1 import enrollment as enroll_v1
 
 VERSIONS = {
     'v0': enroll_v0,

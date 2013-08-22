@@ -5,7 +5,7 @@
 
 from M2Crypto import EC, BIO
 from base64 import urlsafe_b64encode, urlsafe_b64decode
-from u2flib import u2f_v0 as u2f
+from u2flib_server import u2f_v0 as u2f
 import json
 import os
 import struct

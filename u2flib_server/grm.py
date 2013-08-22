@@ -5,7 +5,7 @@
 
 __all__ = ['GRM']
 
-from u2flib.utils import pub_key_from_der
+from u2flib_server.utils import pub_key_from_der
 
 
 class GRM(object):
