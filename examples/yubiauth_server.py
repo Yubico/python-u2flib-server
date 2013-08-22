@@ -1,3 +1,8 @@
+# Copyright (C) 2013 Yubico AB.
+# All rights reserved.
+# Proprietary code owned by Yubico AB.
+# No rights to modifications or redistribution.
+
 from yubiauth import YubiAuth
 from u2flib.u2f_v0 import enrollment, enrollment_from_der, binding_from_der
 from webob.dec import wsgify

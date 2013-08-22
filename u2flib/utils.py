@@ -1,3 +1,9 @@
+# Copyright (C) 2013 Yubico AB.
+# All rights reserved.
+# Proprietary code owned by Yubico AB.
+# No rights to modifications or redistribution.
+
+
 from M2Crypto import EC
 from base64 import b64encode
 
