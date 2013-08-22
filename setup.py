@@ -7,13 +7,13 @@ from setuptools import setup
 from release import release
 
 setup(
-    name='u2flib-server',
+    name='python-u2flib-server',
     version='0.0.1',
     author='Dain Nilsson',
     author_email='dain@yubico.com',
     maintainer='Yubico Open Source Maintainers',
     maintainer_email='ossmaint@yubico.com',
-    url='https://github.com/Yubico/python-u2flib',
+    url='https://github.com/Yubico/python-u2flib-server',
     license='proprietary',
     packages=['u2flib_server'],
     setup_requires=['nose>=1.0'],
