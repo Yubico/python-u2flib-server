@@ -7,14 +7,14 @@ from setuptools import setup
 from release import release
 
 setup(
-    name='u2flib',
+    name='u2flib-server',
     version='0.0.1',
     author='Dain Nilsson',
     author_email='dain@yubico.com',
     maintainer='Yubico Open Source Maintainers',
     maintainer_email='ossmaint@yubico.com',
     url='https://github.com/Yubico/python-u2flib',
-    license='BSD 2 clause',
+    license='proprietary',
     packages=['u2flib'],
     setup_requires=['nose>=1.0'],
     install_requires=['M2Crypto'],
@@ -22,7 +22,7 @@ setup(
     tests_require=[''],
     cmdclass={'release': release},
     classifiers=[
-        'License :: OSI Approved :: BSD License',
+        'License :: Other/Proprietary License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Development Status :: 2 - Pre-Alpha',
