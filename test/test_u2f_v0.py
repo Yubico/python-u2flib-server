@@ -14,7 +14,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from u2flib_server import u2f_v0 as u2f
-from u2flib_server.soft_u2f_v0 import SoftU2FDevice
+from soft_u2f_v0 import SoftU2FDevice
 from u2flib_server.utils import websafe_encode
 from M2Crypto import EC
 import json
