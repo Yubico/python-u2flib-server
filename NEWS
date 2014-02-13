@@ -1,0 +1,12 @@
+* Version 0.0.3 (unreleased)
+
+  * Added support for U2F V2.
+  * Added u2f_server.py example, for a fully stand-alone example.
+
+* Version 0.0.2 (unreleased)
+
+  * Allow example server to be used for multiple origins.
+
+* Version 0.0.1 (released 2013-08-22)
+
+  * Initial release!
