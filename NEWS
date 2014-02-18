@@ -1,6 +1,9 @@
-* Version 0.0.3 (unreleased)
+* Version 1.0.0 (released 2014-02-18)
+
+  * First public release!
 
   * Added support for U2F V2.
+
   * Added u2f_server.py example, for a fully stand-alone example.
 
 * Version 0.0.2 (unreleased)
@@ -9,4 +12,4 @@
 
 * Version 0.0.1 (released 2013-08-22)
 
-  * Initial release!
+  * Initial internal release!
