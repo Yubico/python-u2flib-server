@@ -25,6 +25,8 @@ If username is omitted, a default value of "user" will be used.
 Any error will be returned as a stacktrace with a 400 response code.
 
 Note that this is intended for test/demo purposes, not production use!
+
+This example requires webob to be installed.
 """
 
 from u2flib_server.u2f_v2 import (enrollment, deserialize_enrollment,
