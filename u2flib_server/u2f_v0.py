@@ -89,9 +89,9 @@ class GRM(object):
     def serialize(self):
         return self.ho + self.data
 
-    @staticmethod
-    def deserialize(der):
-        return GRM(der[32:], der[:32])
+    @classmethod
+    def deserialize(cls, der):
+        return cls(der[32:], der[:32])
 
 
 class U2FEnrollment(object):
@@ -145,13 +145,13 @@ class U2FEnrollment(object):
         der = b64decode(''.join(bio.read_all().splitlines()[1:-1]))
         return self.ho + der
 
-    @staticmethod
-    def deserialize(der):
+    @classmethod
+    def deserialize(cls, der):
         # Convert to PEM format
         ho = der[:32]
         pem = PEM_PRIVATE_KEY % b64_split(der[32:])
         dh = EC.load_key_bio(BIO.MemoryBuffer(pem))
-        return U2FEnrollment(ho, dh, origin_as_hash=True)
+        return cls(ho, dh, origin_as_hash=True)
 
 
 class U2FBinding(object):
@@ -173,10 +173,10 @@ class U2FBinding(object):
         # Not actually DER, but it will do for v0.
         return self.km + self.grm.serialize()
 
-    @staticmethod
-    def deserialize(der):
+    @classmethod
+    def deserialize(cls, der):
         # Again, not actually DER
-        return U2FBinding(GRM.deserialize(der[16:]), der[:16])
+        return cls(GRM.deserialize(der[16:]), der[:16])
 
 
 class U2FChallenge(object):
@@ -240,10 +240,10 @@ class U2FChallenge(object):
         # Not actually DER, but it will do for v0.
         return self.challenge
 
-    @staticmethod
-    def deserialize(binding, der):
+    @classmethod
+    def deserialize(cls, binding, der):
         # Again, not actually DER
-        return U2FChallenge(binding, der)
+        return cls(binding, der)
 
 
 enrollment = U2FEnrollment.__call__

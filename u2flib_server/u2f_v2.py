@@ -76,10 +76,10 @@ class RegistrationResponse(object):
     def serialize(self):
         return websafe_encode(self.app_param + self.chal_param + self.data)
 
-    @staticmethod
-    def deserialize(serialized):
+    @classmethod
+    def deserialize(cls, serialized):
         data = websafe_decode(serialized)
-        return RegistrationResponse(data[:32], data[32:64], data[64:])
+        return cls(data[:32], data[32:64], data[64:])
 
 
 class AuthenticationResponse(object):
@@ -114,10 +114,10 @@ class AuthenticationResponse(object):
     def serialize(self):
         return websafe_encode(self.app_param + self.chal_param + self.data)
 
-    @staticmethod
-    def deserialize(serialized):
+    @classmethod
+    def deserialize(cls, serialized):
         data = websafe_decode(serialized)
-        return AuthenticationResponse(data[:32], data[32:64], data[64:])
+        return cls(data[:32], data[32:64], data[64:])
 
 
 class U2FEnrollment(object):
@@ -218,11 +218,11 @@ class U2FEnrollment(object):
             'challenge': websafe_encode(self.challenge)
         })
 
-    @staticmethod
-    def deserialize(serialized):
+    @classmethod
+    def deserialize(cls, serialized):
         data = json.loads(serialized)
-        return U2FEnrollment(data['appId'], data['facets'],
-                             websafe_decode(data['challenge']))
+        return cls(data['appId'], data['facets'],
+                   websafe_decode(data['challenge']))
 
 
 class U2FBinding(object):
@@ -250,11 +250,11 @@ class U2FBinding(object):
             'response': self.response.serialize()
         })
 
-    @staticmethod
-    def deserialize(serialized):
+    @classmethod
+    def deserialize(cls, serialized):
         data = json.loads(serialized)
-        return U2FBinding(data['appId'], data['facets'],
-                          RegistrationResponse.deserialize(data['response']))
+        return cls(data['appId'], data['facets'],
+                   RegistrationResponse.deserialize(data['response']))
 
 
 class U2FChallenge(object):
@@ -337,10 +337,10 @@ class U2FChallenge(object):
             'challenge': websafe_encode(self.challenge)
         })
 
-    @staticmethod
-    def deserialize(binding, serialized):
+    @classmethod
+    def deserialize(cls, binding, serialized):
         data = json.loads(serialized)
-        return U2FChallenge(binding, websafe_decode(data['challenge']))
+        return cls(binding, websafe_decode(data['challenge']))
 
 
 enrollment = U2FEnrollment.__call__
