@@ -18,6 +18,12 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
+==Dependencies==
+
+u2flib-host depends on M2Crypto. On a Ubuntu system, this can be installed with the following command: 
+
+   $ apt-get install python-m2crypto
+
 ==Installation==
 
 u2flib-host is installable by running the following command:
