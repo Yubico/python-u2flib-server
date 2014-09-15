@@ -15,9 +15,8 @@
 
 from M2Crypto import EC, BIO
 from u2flib_server.utils import (websafe_encode, websafe_decode,
-                                 sha_256 as H)
+                                 sha_256 as H, rand_bytes)
 import json
-import os
 import struct
 
 CURVE = EC.NID_X9_62_prime256v1
@@ -81,7 +80,7 @@ class SoftU2FDevice(object):
         pub_key = str(privu.pub().get_der())[-65:]
 
         # Store
-        key_handle = os.urandom(64)
+        key_handle = rand_bytes(64)
         app_param = H(data['appId'])
         self.keys[key_handle] = (privu, app_param)
 

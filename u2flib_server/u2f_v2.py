@@ -17,9 +17,8 @@ from M2Crypto import EC, X509
 from u2flib_server.jsapi import (RegisterRequest, RegisterResponse,
                                  SignRequest, SignResponse)
 from u2flib_server.utils import (pub_key_from_der, sha_256, websafe_decode,
-                                 websafe_encode)
+                                 websafe_encode, rand_bytes)
 import json
-import os
 import struct
 
 __all__ = ['U2FEnrollment', 'U2FBinding', 'U2FChallenge']
@@ -147,7 +146,7 @@ class U2FEnrollment(object):
             self.facets = facets
 
         if challenge is None:
-            self.challenge = os.urandom(32)
+            self.challenge = rand_bytes(32)
         else:
             self.challenge = challenge
 
@@ -276,7 +275,7 @@ class U2FChallenge(object):
         self.app_param = H(binding.app_id.encode('idna'))
 
         if challenge is None:
-            self.challenge = os.urandom(32)
+            self.challenge = rand_bytes(32)
         else:
             self.challenge = challenge
 
