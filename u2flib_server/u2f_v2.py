@@ -241,8 +241,8 @@ class U2FBinding(object):
         self.certificate = response.certificate
         self.response = response
 
-    def make_challenge(self):
-        return U2FChallenge(self)
+    def make_challenge(self, challenge=None):
+        return U2FChallenge(self, challenge)
 
     def deserialize_challenge(self, serialized):
         return U2FChallenge.deserialize(self, serialized)
