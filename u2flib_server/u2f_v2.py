@@ -27,7 +27,7 @@ H = sha_256
 VERSION = 'U2F_V2'
 
 
-class RegistrationResponse(object):
+class RawRegistrationResponse(object):
 
     """
     Object representing a raw registration response.
@@ -82,7 +82,7 @@ class RegistrationResponse(object):
         return cls(data[:32], data[32:64], data[64:])
 
 
-class AuthenticationResponse(object):
+class RawAuthenticationResponse(object):
 
     """
     Object representing a raw authentication response.
@@ -191,7 +191,7 @@ class U2FEnrollment(object):
 
         self._validate_client_data(json.loads(client_data))
 
-        response = RegistrationResponse(
+        response = RawRegistrationResponse(
             self.app_param,
             client_param,
             websafe_decode(response['registrationData'])
@@ -203,13 +203,18 @@ class U2FEnrollment(object):
         return U2FBinding(self.app_id, self.facets, response)
 
     @property
-    def json(self):
-        """Return a JSON RegistrationData object to be sent to the client."""
-        return json.dumps({
+    def data(self):
+        """Return a RegisterRequest object as a python dict."""
+        return {
             'version': VERSION,
             'challenge': websafe_encode(self.challenge),
             'appId': self.app_id
-        })
+        }
+
+    @property
+    def json(self):
+        """Return a JSON RegisterRequest object to be sent to the client."""
+        return json.dumps(self.data)
 
     def serialize(self):
         return json.dumps({
@@ -254,7 +259,7 @@ class U2FBinding(object):
     def deserialize(cls, serialized):
         data = json.loads(serialized)
         return cls(data['appId'], data['facets'],
-                   RegistrationResponse.deserialize(data['response']))
+                   RawRegistrationResponse.deserialize(data['response']))
 
 
 class U2FChallenge(object):
@@ -316,21 +321,29 @@ class U2FChallenge(object):
 
         self._validate_client_data(json.loads(client_data))
 
-        response = AuthenticationResponse(self.app_param, client_param,
-                                          websafe_decode(response['signatureData']))
+        response = RawAuthenticationResponse(
+            self.app_param,
+            client_param,
+            websafe_decode(
+                response['signatureData']))
         response.verify_signature(self.binding.pub_key)
 
         return response.counter_int, response.user_presence
 
     @property
-    def json(self):
-        """Return a JSON SignData object to be sent to the client."""
-        return json.dumps({
+    def data(self):
+        """Return a AuthenticateRequest as a python dict."""
+        return {
             'version': VERSION,
             'challenge': websafe_encode(self.challenge),
             'appId': self.binding.app_id,
             'keyHandle': websafe_encode(self.binding.key_handle)
-        })
+        }
+
+    @property
+    def json(self):
+        """Return a JSON AuthenticateRequest object to be sent to the client."""
+        return json.dumps(self.data)
 
     def serialize(self):
         return json.dumps({
