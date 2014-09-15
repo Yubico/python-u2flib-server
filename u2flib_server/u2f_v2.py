@@ -184,20 +184,21 @@ class U2FEnrollment(object):
         }
 
         """
-        response = RegisterResponse(response)
+        if not isinstance(response, RegisterResponse):
+            response = RegisterResponse(response)
 
         self._validate_client_data(response.clientData)
 
-        response = RawRegistrationResponse(
+        raw_response = RawRegistrationResponse(
             self.app_param,
             response.clientParam,
             websafe_decode(response['registrationData'])
         )
 
-        response.verify_csr_signature()
+        raw_response.verify_csr_signature()
         # TODO: Validate the certificate as well
 
-        return U2FBinding(self.app_id, self.facets, response)
+        return U2FBinding(self.app_id, self.facets, raw_response)
 
     @property
     def data(self):
@@ -309,18 +310,19 @@ class U2FChallenge(object):
             "challenge": string, //b64 encoded challenge, also in clientData, why is this here?
         }
         """
-        response = SignResponse(response)
+        if not isinstance(response, SignResponse):
+            response = SignResponse(response)
 
         self._validate_client_data(response.clientData)
 
-        response = RawAuthenticationResponse(
+        raw_response = RawAuthenticationResponse(
             self.app_param,
             response.clientParam,
             websafe_decode(
                 response['signatureData']))
-        response.verify_signature(self.binding.pub_key)
+        raw_response.verify_signature(self.binding.pub_key)
 
-        return response.counter_int, response.user_presence
+        return raw_response.counter_int, raw_response.user_presence
 
     @property
     def data(self):
