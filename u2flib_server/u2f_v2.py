@@ -14,7 +14,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from M2Crypto import EC, X509
-from u2flib_server.jsapi import RegisterResponse, SignResponse
+from u2flib_server.jsapi import (RegisterRequest, RegisterResponse,
+                                 SignRequest, SignResponse)
 from u2flib_server.utils import (pub_key_from_der, sha_256, websafe_decode,
                                  websafe_encode)
 import json
@@ -202,17 +203,17 @@ class U2FEnrollment(object):
 
     @property
     def data(self):
-        """Return a RegisterRequest object as a python dict."""
-        return {
+        """Return a RegisterRequest object."""
+        return RegisterRequest({
             'version': VERSION,
             'challenge': websafe_encode(self.challenge),
             'appId': self.app_id
-        }
+        })
 
     @property
     def json(self):
         """Return a JSON RegisterRequest object to be sent to the client."""
-        return json.dumps(self.data)
+        return self.data.json
 
     def serialize(self):
         return json.dumps({
@@ -326,18 +327,18 @@ class U2FChallenge(object):
 
     @property
     def data(self):
-        """Return a AuthenticateRequest as a python dict."""
-        return {
+        """Return a SignRequest."""
+        return SignRequest({
             'version': VERSION,
             'challenge': websafe_encode(self.challenge),
             'appId': self.binding.app_id,
             'keyHandle': websafe_encode(self.binding.key_handle)
-        }
+        })
 
     @property
     def json(self):
-        """Return a JSON AuthenticateRequest object to be sent to the client."""
-        return json.dumps(self.data)
+        """Return a JSON SignRequest object to be sent to the client."""
+        return self.data.json
 
     def serialize(self):
         return json.dumps({
