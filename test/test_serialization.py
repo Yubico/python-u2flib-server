@@ -13,52 +13,37 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from u2flib_server import u2f_v0 as u2f
-from base64 import urlsafe_b64decode
+from u2flib_server import u2f_v2 as u2f
 
-BINDING_DER = urlsafe_b64decode(
-    "ab3lk0OXHuYB-zTld7lWuDxWGFFCFFmatP2MXBMOvrBmffdwB2P5_qEa1qcAbNNp" +
-    "BAMp4DeZm8Kiz6utxjdT5VI3k_jNeR5vHYR5yGRK7KgsF_6-UteXtgRMdKSzXXNX" +
-    "WP3kfVbMewCdmNPigSqii8t1sRUqEps9M3z5Yb-XJwHZicYhs-Y-pxX_MrBqK8Rj" +
-    "aGuMr_dbufi5BOvaGPWKH-jKv40-aIDRJERqpAbG2ljoMIIBRDCB6qADAgECAgkB" +
-    "kYn_____UYMwCgYIKoZIzj0EAwIwGzEZMBcGA1UEAxMQR251YmJ5IEhTTSBDQSAw" +
-    "MDAiGA8yMDEyMDYwMTAwMDAwMFoYDzIwNjIwNTMxMjM1OTU5WjAwMRkwFwYDVQQD" +
-    "ExBHb29nbGUgR251YmJ5IHYwMRMwEQYDVQQtAwoAAZGJ_____1GDMFkwEwYHKoZI" +
-    "zj0CAQYIKoZIzj0DAQcDQgAEKe7yqvUpDUbU2-DkutjIVtuXt9wvSftfhXrOS3uV" +
-    "iksUlShw9xhDs5nPludXT_J4SmtvXW92lsuQ_hQi3Z8hhzAKBggqhkjOPQQDAgNJ" +
-    "ADBGAiEAtMrqXcYPv58ATthPxPGFIpgcHDAxVcCCdOiJ8_EMWyMCIQD6r7TxC5L0" +
-    "dU47CLWvNT94SFvJA-zn6pESZPwWc7ZZjzBFAiBROGadC5ZIfdDhZn7_VJXHYu3-" +
-    "7ksCrFqDA2pE_Pu32wIhAKH5z4xx8dLBD7fW-rES3dl18mQ7nL_q09kzmIDMZ3xz"
-)
+BINDING_JSON = """{"facets": ["https://www.example.com"], "response": "TryFkMQHor1kSwwl-GvGuaU8bHB6Sf41O50iTqESQh2-mDpmExMJU4PrOkJlkjxuKCQwmJ1NQCiaLDru6beCNAUECGoQn9XZtovqnLrLRtyxdxpcJH5xJYL_5sl2le-iQtC4AFHSiOXWDk4y2cIjD9o9n9RpSL_00PWrXPKVIaJ7zUAtf2O5sIcgCadAwoUXTCmB-eEbwFVg6Qa3ohG31ROq0vPSjV17zQI1zmXZ2lWJ-tuvHRI5hPELZ1zFhcmOxGnRMIIBhzCCAS6gAwIBAgIJAJm-6LEMouwcMAkGByqGSM49BAEwITEfMB0GA1UEAwwWWXViaWNvIFUyRiBTb2Z0IERldmljZTAeFw0xMzA3MTcxNDIxMDNaFw0xNjA3MTYxNDIxMDNaMCExHzAdBgNVBAMMFll1YmljbyBVMkYgU29mdCBEZXZpY2UwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQ74Zfdc36YPZ-w3gnnXEPIBl1J3pol6IviRAMc_hCIZFbDDwMs4bSWeFdwqjGfjDlICArdmjMWnDF_XCGvHYEto1AwTjAdBgNVHQ4EFgQUDai_k1dOImjupkubYxhOkoX3sZ4wHwYDVR0jBBgwFoAUDai_k1dOImjupkubYxhOkoX3sZ4wDAYDVR0TBAUwAwEB_zAJBgcqhkjOPQQBA0gAMEUCIFyVmXW7zlnYVWhuyCbZ-OKNtSpovBB7A5OHAH52dK9_AiEA-mT4tz5eJV8W2OwVxcq6ZIjrwqXcjXSy2G0k27yAUDkwRQIgJMh6004c1g-p-xI2y9wxVzzkjakceltiIAVcSmY1KpYCIQCfrKNqEZRuSN7JhmoHZSYUbha9Z4IiIyNR9rJYhJjyUw", "appId": "http://www.example.com/appid"}"""
 
 
 def test_enroll_serialization():
     enroll1 = u2f.enrollment('https://example.com')
     enroll2 = u2f.deserialize_enrollment(enroll1.serialize())
 
-    assert enroll1.ho == enroll2.ho
+    assert enroll1.app_id == enroll2.app_id
+    assert enroll1.facets == enroll2.facets
     assert enroll1.json == enroll2.json
     assert enroll1.serialize() == enroll2.serialize()
 
 
 def test_binding_serialization():
-    binding = u2f.deserialize_binding(BINDING_DER)
+    binding = u2f.deserialize_binding(BINDING_JSON)
 
-    assert binding.ho == u2f.H('https://www.example.com'.encode('punycode'))
-    assert binding.km == urlsafe_b64decode("ab3lk0OXHuYB-zTld7lWuA==")
-    assert binding.hk == urlsafe_b64decode(
-        "dbEVKhKbPTN8-WG_lycB2YnGIbPmPqcV_zKwaivEY2hrjK_3W7n4uQTr2hj1ih" +
-        "_oyr-NPmiA0SREaqQGxtpY6A==")
+    assert binding.app_id == 'http://www.example.com/appid'
+    assert binding.pub_key == ("BAhqEJ/V2baL6py6y0bcsXcaXCR+cSWC/+bJdpXvokL" +\
+        "QuABR0ojl1g5OMtnCIw/aPZ/UaUi/9ND1q1zylSGie80=").decode('base64')
 
     binding2 = u2f.deserialize_binding(binding.serialize())
 
-    assert binding2.km == binding.km
-    assert binding2.grm.serialize() == binding.grm.serialize()
+    assert binding2.pub_key == binding.pub_key
+    assert binding2.response.serialize() == binding.response.serialize()
     assert binding2.serialize() == binding.serialize()
 
 
 def test_challenge_serialization():
-    binding = u2f.deserialize_binding(BINDING_DER)
+    binding = u2f.deserialize_binding(BINDING_JSON)
 
     challenge1 = binding.make_challenge()
     challenge2 = binding.deserialize_challenge(challenge1.serialize())
