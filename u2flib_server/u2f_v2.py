@@ -14,6 +14,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from M2Crypto import EC, X509
+from u2flib_server.jsapi import RegisterResponse, SignResponse
 from u2flib_server.utils import (pub_key_from_der, sha_256, websafe_decode,
                                  websafe_encode)
 import json
@@ -160,18 +161,18 @@ class U2FEnrollment(object):
         }
 
         """
-        if client_data['typ'] != self.TYPE_FINISH_ENROLLMENT:
+        if client_data.typ != self.TYPE_FINISH_ENROLLMENT:
             raise ValueError("Wrong type! Was: %s, expecting: %s" % (
-                client_data['typ'], self.TYPE_FINISH_ENROLLMENT))
+                client_data.typ, self.TYPE_FINISH_ENROLLMENT))
 
-        challenge = websafe_decode(client_data['challenge'])
-        if self.challenge != challenge:
+        if self.challenge != client_data.challenge:
             raise ValueError("Wrong challenge! Was: %s, expecting: %s" % (
-                challenge.encode('hex'), self.challenge.encode('hex')))
+                client_data.challenge.encode('hex'),
+                self.challenge.encode('hex')))
 
-        if client_data['origin'] not in self.facets:
+        if client_data.origin not in self.facets:
             raise ValueError("Invalid facet! Was: %s, expecting one of: %r" % (
-                client_data['origin'], self.facets))
+                client_data.origin, self.facets))
 
     def bind(self, response):
         """
@@ -183,17 +184,13 @@ class U2FEnrollment(object):
         }
 
         """
-        if isinstance(response, basestring):
-            response = json.loads(response)
+        response = RegisterResponse(response)
 
-        client_data = websafe_decode(response['clientData'])
-        client_param = H(client_data)
-
-        self._validate_client_data(json.loads(client_data))
+        self._validate_client_data(response.clientData)
 
         response = RawRegistrationResponse(
             self.app_param,
-            client_param,
+            response.clientParam,
             websafe_decode(response['registrationData'])
         )
 
@@ -291,19 +288,18 @@ class U2FChallenge(object):
 
         """
 
-        if client_data['typ'] != self.TYPE_GET_ASSERTION:
+        if client_data.typ != self.TYPE_GET_ASSERTION:
             raise ValueError("Wrong type! Was: %s, expecting: %s" % (
-                client_data['typ'], self.TYPE_GET_ASSERTION))
+                client_data.typ, self.TYPE_GET_ASSERTION))
 
-        challenge = websafe_decode(client_data['challenge'])
-        if self.challenge != challenge:
-            print "%r != %r" % (self.challenge, challenge)
+        if self.challenge != client_data.challenge:
             raise ValueError("Wrong challenge! Was: %s, expecting: %s" % (
-                challenge.encode('hex'), self.challenge.encode('hex')))
+                client_data.challenge.encode('hex'),
+                self.challenge.encode('hex')))
 
-        if client_data['origin'] not in self.binding.facets:
+        if client_data.origin not in self.binding.facets:
             raise ValueError("Invalid facet! Was: %s, expecting one of: %r" % (
-                client_data['origin'], self.binding.facets))
+                client_data.origin, self.binding.facets))
 
     def validate(self, response):
         """
@@ -313,17 +309,13 @@ class U2FChallenge(object):
             "challenge": string, //b64 encoded challenge, also in clientData, why is this here?
         }
         """
-        if isinstance(response, basestring):
-            response = json.loads(response)
+        response = SignResponse(response)
 
-        client_data = websafe_decode(response['clientData'])
-        client_param = H(client_data)
-
-        self._validate_client_data(json.loads(client_data))
+        self._validate_client_data(response.clientData)
 
         response = RawAuthenticationResponse(
             self.app_param,
-            client_param,
+            response.clientParam,
             websafe_decode(
                 response['signatureData']))
         response.verify_signature(self.binding.pub_key)
