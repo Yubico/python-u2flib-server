@@ -307,7 +307,7 @@ class U2FChallenge(object):
         signResponse = {
             "clientData": string, //b64 encoded JSON of ClientData
             "signatureData": string, //b64 encoded raw sign response
-            "challenge": string, //b64 encoded challenge, also in clientData, why is this here?
+            "keyHandle": string, //b64 encoded key handle
         }
         """
         if not isinstance(response, SignResponse):
@@ -330,8 +330,8 @@ class U2FChallenge(object):
         return SignRequest({
             'version': VERSION,
             'challenge': websafe_encode(self.challenge),
-            'appId': self.binding.app_id,
-            'keyHandle': websafe_encode(self.binding.key_handle)
+            'keyHandle': websafe_encode(self.binding.key_handle),
+            'appId': self.binding.app_id
         })
 
     @property
