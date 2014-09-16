@@ -203,11 +203,11 @@ class U2FEnrollment(object):
     @property
     def data(self):
         """Return a RegisterRequest object."""
-        return RegisterRequest({
-            'version': VERSION,
-            'challenge': websafe_encode(self.challenge),
-            'appId': self.app_id
-        })
+        return RegisterRequest(
+            version=VERSION,
+            challenge=websafe_encode(self.challenge),
+            appId=self.app_id
+        )
 
     @property
     def json(self):
@@ -327,12 +327,12 @@ class U2FChallenge(object):
     @property
     def data(self):
         """Return a SignRequest."""
-        return SignRequest({
-            'version': VERSION,
-            'challenge': websafe_encode(self.challenge),
-            'keyHandle': websafe_encode(self.binding.key_handle),
-            'appId': self.binding.app_id
-        })
+        return SignRequest(
+            version=VERSION,
+            challenge=websafe_encode(self.challenge),
+            keyHandle=websafe_encode(self.binding.key_handle),
+            appId=self.binding.app_id
+        )
 
     @property
     def json(self):

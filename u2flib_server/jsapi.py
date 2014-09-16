@@ -13,7 +13,14 @@ __all__ = [
 class JSONDict(dict):
     __getattr__ = dict.__getitem__
 
-    def __init__(self, data=None):
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1:
+            data = args[0]
+        elif len(args) == 0:
+            data = kwargs
+        else:
+            raise TypeError("Wrong number of arguments given!")
+
         if isinstance(data, basestring):
             self.update(json.loads(data))
         elif isinstance(data, dict):
