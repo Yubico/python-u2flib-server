@@ -36,7 +36,6 @@ setup(
     maintainer='Yubico Open Source Maintainers',
     maintainer_email='ossmaint@yubico.com',
     url='https://github.com/Yubico/python-u2flib-server',
-    license='proprietary',
     packages=['u2flib_server'],
     setup_requires=['nose>=1.0'],
     install_requires=['M2Crypto'],
