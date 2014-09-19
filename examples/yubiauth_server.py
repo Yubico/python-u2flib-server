@@ -35,8 +35,6 @@ from webob import exc
 import json
 import traceback
 
-APPID_PATH = "app-identity"
-
 
 def get_origin(environ):
     if environ.get('HTTP_HOST'):
@@ -69,13 +67,13 @@ class U2FServer(object):
     @wsgify
     def __call__(self, request):
         self.origin = get_origin(request.environ)
-        self.app_id = "%s/%s" % (self.origin, APPID_PATH)
+        self.app_id = self.origin
         page = request.path_info_pop()
 
         # To be able to see what the server considers its origin to be:
         if page == 'origin':
             return self.origin
-        elif page == APPID_PATH:
+        elif page is None:
             return json.dumps([self.origin])
 
         with YubiAuth() as auth:

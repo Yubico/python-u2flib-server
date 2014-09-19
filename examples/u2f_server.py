@@ -38,8 +38,6 @@ import json
 import traceback
 import argparse
 
-APPID_PATH = "app-identity"
-
 
 def get_origin(environ):
     if environ.get('HTTP_HOST'):
@@ -76,11 +74,11 @@ class U2FServer(object):
     @wsgify
     def __call__(self, request):
         self.facet = get_origin(request.environ)
-        self.app_id = "%s/%s" % (self.facet, APPID_PATH)
+        self.app_id = self.facet
 
         page = request.path_info_pop()
 
-        if page == APPID_PATH:
+        if not page:
             return json.dumps([self.facet])
 
         try:
