@@ -1,3 +1,9 @@
+* Version 1.2.0 (unreleased)
+
+  * Expose more low level U2F primitives.
+
+  * Removed old draft versions.
+
 * Version 1.0.0 (released 2014-02-18)
 
   * First public release!

@@ -1,13 +1,9 @@
-u2flib-server
-=============
-
+== u2flib-server ==
 Provides functionality for working with the server side aspects of the U2F
-protocol. Currently supports version 0, as implicitly defined by the
-GnubbyPilot implementation, as well as v2, as defined in the 2014-02-09
-draft specification, from: http://fidoalliance.org/specifications/download
+protocol as defined in the FIDO
+specifications, available here: http://fidoalliance.org/specifications/download
 
-==License==
-
+=== License ===
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -18,20 +14,18 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-==Dependencies==
+=== Dependencies ===
+u2flib-host depends on M2Crypto. On a Ubuntu system, this can be installed with
+the following command: 
 
-u2flib-host depends on M2Crypto. On a Ubuntu system, this can be installed with the following command: 
+  $ apt-get install python-m2crypto
 
-   $ apt-get install python-m2crypto
-
-==Installation==
-
+=== Installation ===
 u2flib-host is installable by running the following command:
 
   $ python setup.py install
 
-==Example==
-
+=== Example ===
 See examples/u2f_server.py for a working example of a HTTP server for
 U2F enrollment and authentication. u2f_server.py can be run as a stand-alone
 server, and can be used to test a U2F client implementation, such as
@@ -40,34 +34,34 @@ python-u2flib-host, using for example cURL.
 The examples below show cURL command to register a U2F device, and to
 authenticate it.
 
-===Registration===
-
+==== Registration ====
 Registration is initiated by sending a request to the server:
 
-    $ curl http://localhost:8081/enroll
-    {"sessionId": "", "challenge": "D2pzTPZa7bq69ABuiGQILo9zcsTURP26RLifTyCkilc", "version": "U2F_V2", "app_id": "http://localhost:8081/app-identity"}
-
-The registration data is then fed to the U2F client, resulting in the
-response data, which is passed back to the server:
-
-    $ curl http://localhost:8081/bind -d'data=[{"bd": "eyJvcmlnaW4iOiAiaHR0cDovL2xvY2FsaG9zdDo4MDgxIiwgImNoYWxsZW5nZSI6ICJEMnB6VFBaYTdicTY5QUJ1aUdRSUxvOXpjc1RVUlAyNlJMaWZUeUNraWxjIiwgInR5cCI6ICJuYXZpZ2F0b3IuaWQuZmluaXNoRW5yb2xsbWVudCJ9", "sessionId": "", "registrationData": "BQSivQtJ6-lAgZ2qQ0aUGLEiJSRoLWUSGcmMO8C-GuibA0-xTvmuQfTqKyFJZWOUjGzEIgF4xV6gJ6itcagsyuUWQEQh9noDSu-WtzTOMhK_lKHxwHtQgJHCkzs4mukfpf310K5Dq9k6zBNtZ2RMBWgJhI7hJo4JiFn3k2GUNLwKZpwwggGHMIIBLqADAgECAgkAmb7osQyi7BwwCQYHKoZIzj0EATAhMR8wHQYDVQQDDBZZdWJpY28gVTJGIFNvZnQgRGV2aWNlMB4XDTEzMDcxNzE0MjEwM1oXDTE2MDcxNjE0MjEwM1owITEfMB0GA1UEAwwWWXViaWNvIFUyRiBTb2Z0IERldmljZTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABDvhl91zfpg9n7DeCedcQ8gGXUnemiXoi-JEAxz-EIhkVsMPAyzhtJZ4V3CqMZ-MOUgICt2aMxacMX9cIa8dgS2jUDBOMB0GA1UdDgQWBBQNqL-TV04iaO6mS5tjGE6ShfexnjAfBgNVHSMEGDAWgBQNqL-TV04iaO6mS5tjGE6ShfexnjAMBgNVHRMEBTADAQH_MAkGByqGSM49BAEDSAAwRQIgXJWZdbvOWdhVaG7IJtn44o21Kmi8EHsDk4cAfnZ0r38CIQD6ZPi3Pl4lXxbY7BXFyrpkiOvCpdyNdLLYbSTbvIBQOTBFAiEA1uwJKNez6_BHdA2d-DPmRFJj19biYNkhN86SFH5Z_lYCICld2L3ZAVsm_uNFRt13_N9dlhGu50pb1ql8-_3_p5v1"}]'
-    true
-
+----
+$ curl http://localhost:8081/enroll
+{"challenge": "D2pzTPZa7bq69ABuiGQILo9zcsTURP26RLifTyCkilc", "version": "U2F_V2", "appId": "http://localhost:8081"}
+----
+The RegisterRequest data is then fed to the U2F client, resulting in the
+RegisterResponse data, which is passed back to the server:
+----
+$ curl http://localhost:8081/bind -d'data={"clientData": "eyJvcmlnaW4iOiAiaHR0cDovL2xvY2FsaG9zdDo4MDgxIiwgImNoYWxsZW5nZSI6ICJEMnB6VFBaYTdicTY5QUJ1aUdRSUxvOXpjc1RVUlAyNlJMaWZUeUNraWxjIiwgInR5cCI6ICJuYXZpZ2F0b3IuaWQuZmluaXNoRW5yb2xsbWVudCJ9", "registrationData": "BQSivQtJ6-lAgZ2qQ0aUGLEiJSRoLWUSGcmMO8C-GuibA0-xTvmuQfTqKyFJZWOUjGzEIgF4xV6gJ6itcagsyuUWQEQh9noDSu-WtzTOMhK_lKHxwHtQgJHCkzs4mukfpf310K5Dq9k6zBNtZ2RMBWgJhI7hJo4JiFn3k2GUNLwKZpwwggGHMIIBLqADAgECAgkAmb7osQyi7BwwCQYHKoZIzj0EATAhMR8wHQYDVQQDDBZZdWJpY28gVTJGIFNvZnQgRGV2aWNlMB4XDTEzMDcxNzE0MjEwM1oXDTE2MDcxNjE0MjEwM1owITEfMB0GA1UEAwwWWXViaWNvIFUyRiBTb2Z0IERldmljZTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABDvhl91zfpg9n7DeCedcQ8gGXUnemiXoi-JEAxz-EIhkVsMPAyzhtJZ4V3CqMZ-MOUgICt2aMxacMX9cIa8dgS2jUDBOMB0GA1UdDgQWBBQNqL-TV04iaO6mS5tjGE6ShfexnjAfBgNVHSMEGDAWgBQNqL-TV04iaO6mS5tjGE6ShfexnjAMBgNVHRMEBTADAQH_MAkGByqGSM49BAEDSAAwRQIgXJWZdbvOWdhVaG7IJtn44o21Kmi8EHsDk4cAfnZ0r38CIQD6ZPi3Pl4lXxbY7BXFyrpkiOvCpdyNdLLYbSTbvIBQOTBFAiEA1uwJKNez6_BHdA2d-DPmRFJj19biYNkhN86SFH5Z_lYCICld2L3ZAVsm_uNFRt13_N9dlhGu50pb1ql8-_3_p5v1"}'
+true
+----
 The result, "true", indicates that registration was successful.
 
-===Authentication===
+==== Authentication ====
+Authentication for a previously registered U2F device is done by sending a
+request to the server:
 
-Authentication for a previously enrolled device is done by sending a request to
-the server:
-
-    $ curl http://localhost:8081/sign
-    {"key_handle": "RCH2egNK75a3NM4yEr-UofHAe1CAkcKTOzia6R-l_fXQrkOr2TrME21nZEwFaAmEjuEmjgmIWfeTYZQ0vApmnA", "sessionId": "", "challenge": "Ql05duFdQj6oc_mZf1Lt08PyXWJJxN5xe2SagdUGCxo", "version": "U2F_V2", "app_id": "http://localhost:8081/app-identity"}
-
-The challenge data is then fed to the U2F client, resulting in the response
-data which is passed back to the server:
-
-    $ curl http://localhost:8081/verify -d'data={"bd": "eyJvcmlHR0cDovL2xvY2FsaG9zdDo4MDgxIiwgImNoYWxsZW5nZSI6ICJlNGtScWk3eTdmUHdtZGZ1RnJ5WkxyVUhYby1BdF91YUFwWHdxdkV2UmxzIiwgInR5cCI6ICJuYXZpZ2F0b3IuaWQuZ2V0QXNzZXJ0aW9uIn0", "challenge": "e4kRqi7y7fPwmdfuFryZLrUHXo-At_uaApXwqvEvRls", "app_id": "http://localhost:8081/app-identity", "sessionId": "", "sign": "AQAAAAIwRQIhAIyr0y4xg-pI8NhAUHJmaluGXwZ7yd5i0e7FQE4l9OaEAiB68JP-df7ro8ohxCcgyxfRiKrsY1J67kLcEuYb0MCrDg"}'
-    {"touch": "\u0001", "counter": 2}
-
+----
+$ curl http://localhost:8081/sign
+{"keyHandle": "RCH2egNK75a3NM4yEr-UofHAe1CAkcKTOzia6R-l_fXQrkOr2TrME21nZEwFaAmEjuEmjgmIWfeTYZQ0vApmnA", "challenge": "Ql05duFdQj6oc_mZf1Lt08PyXWJJxN5xe2SagdUGCxo", "version": "U2F_V2", "appId": "http://localhost:8081/app-identity"}
+----
+The AuthenticateRequest data is then fed to the U2F client, resulting in an
+AuthenticateResponse object which is passed back to the server:
+----
+$ curl http://localhost:8081/verify -d'data={"clientData": "eyJvcmlHR0cDovL2xvY2FsaG9zdDo4MDgxIiwgImNoYWxsZW5nZSI6ICJlNGtScWk3eTdmUHdtZGZ1RnJ5WkxyVUhYby1BdF91YUFwWHdxdkV2UmxzIiwgInR5cCI6ICJuYXZpZ2F0b3IuaWQuZ2V0QXNzZXJ0aW9uIn0", "challenge": "e4kRqi7y7fPwmdfuFryZLrUHXo-At_uaApXwqvEvRls", "keyHandle": "RCH2egNK75a3NM4yEr-UofHAe1CAkcKTOzia6R-l_fXQrkOr2TrME21nZEwFaAmEjuEmjgmIWfeTYZQ0vApmnA", "signatureData": "AQAAAAIwRQIhAIyr0y4xg-pI8NhAUHJmaluGXwZ7yd5i0e7FQE4l9OaEAiB68JP-df7ro8ohxCcgyxfRiKrsY1J67kLcEuYb0MCrDg"}'
+{"touch": "\u0001", "counter": 2}
+----
 The response indicates success, giving the U2F devices internal counter value,
 as well as the value of the user presence parameter.
