@@ -24,7 +24,7 @@ from datetime import date
 class release(Command):
     description = "create and release a new version"
     user_options = [
-        ('keyid', None, "GPG key to sign with"),
+        ('keyid=', None, "GPG key to sign with"),
         ('skip-tests', None, "skip running the tests"),
         ('pypi', None, "publish to pypi"),
     ]
