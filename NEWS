@@ -1,4 +1,6 @@
-* Version 1.2.0 (unreleased)
+* Version 2.0.0 (unreleased)
+
+  * Updated to the latest U2F_V2 standard.
 
   * Expose more low level U2F primitives.
 
