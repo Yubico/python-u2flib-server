@@ -65,13 +65,10 @@ class RawRegistrationResponse(object):
         data = chr(0x00) + self.app_param + self.chal_param + \
             self.key_handle + self.pub_key
         pubkey = self.certificate.get_pubkey()
-        # TODO: Figure out how to do this using the EVP API.
-        # pubkey.verify_init()
-        # pubkey.verify_update(data)
-        # if not pubkey.verify_final(self.signature) == 1:
-        digest = H(data)
-        pub_key = EC.pub_key_from_der(pubkey.as_der())
-        if not pub_key.verify_dsa_asn1(digest, self.signature) == 1:
+        pubkey.reset_context('sha256')
+        pubkey.verify_init()
+        pubkey.verify_update(data)
+        if not pubkey.verify_final(self.signature) == 1:
             raise Exception('Attestation signature verification failed!')
 
     def serialize(self):
