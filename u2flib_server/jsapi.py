@@ -33,11 +33,22 @@ class JSONDict(dict):
         return json.dumps(self)
 
 
-class ClientData(JSONDict):
+class WithAppId(object):
+
+    @property
+    def appParam(self):
+        return sha_256(self['appId'].encode('idna'))
+
+
+class WithChallenge(object):
 
     @property
     def challenge(self):
         return websafe_decode(self['challenge'])
+
+
+class ClientData(JSONDict, WithChallenge):
+    pass
 
 
 class WithClientData(object):
@@ -51,7 +62,7 @@ class WithClientData(object):
         return sha_256(websafe_decode(self['clientData']))
 
 
-class RegisterRequest(JSONDict):
+class RegisterRequest(JSONDict, WithAppId, WithChallenge):
     pass
 
 
@@ -62,7 +73,7 @@ class RegisterResponse(JSONDict, WithClientData):
         return websafe_decode(self['registrationData'])
 
 
-class SignRequest(JSONDict):
+class SignRequest(JSONDict, WithAppId, WithChallenge):
     pass
 
 

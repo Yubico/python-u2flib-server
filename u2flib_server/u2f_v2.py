@@ -13,17 +13,21 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from M2Crypto import EC, X509
+from M2Crypto import X509
 from u2flib_server.jsapi import (RegisterRequest, RegisterResponse,
-                                 SignRequest, SignResponse)
+                                 SignRequest, SignResponse, JSONDict,
+                                 WithAppId)
 from u2flib_server.utils import (pub_key_from_der, sha_256, websafe_decode,
                                  websafe_encode, rand_bytes)
-import json
 import struct
 
-__all__ = ['U2FEnrollment', 'U2FBinding', 'U2FChallenge']
+__all__ = [
+    'start_register',
+    'complete_register',
+    'start_authenticate',
+    'verify_authenticate'
+]
 
-H = sha_256
 
 VERSION = 'U2F_V2'
 
@@ -104,7 +108,7 @@ class RawAuthenticationResponse(object):
     def verify_signature(self, pubkey):
         data = self.app_param + self.user_presence + self.counter + \
             self.chal_param
-        digest = H(data)
+        digest = sha_256(data)
         pub_key = pub_key_from_der(pubkey)
         if not pub_key.verify_dsa_asn1(digest, self.signature) == 1:
             raise Exception('Challenge signature verification failed!')
@@ -118,235 +122,104 @@ class RawAuthenticationResponse(object):
         return cls(data[:32], data[32:64], data[64:])
 
 
-class U2FEnrollment(object):
-
+def _validate_client_data(client_data, challenge, typ, valid_facets):
     """
-    A U2F enrollment object representing an incompleted registration.
+    Validate the client data.
 
-    registrationData = {
-        "version": "U2F_V2",
-        "challenge": string //b64 encoded challenge, 32 bytes?
-        "appId": string //A URL pointing to a list of approved facets.
+    clientData = {
+        "typ": string,
+        "challenge": string, //b64 encoded challenge.
+        "origin": string, //Facet used
     }
 
     """
+    if client_data.typ != typ:
+        raise ValueError("Wrong type! Was: %s, expecting: %s" % (
+            client_data.typ, typ))
 
-    TYPE_FINISH_ENROLLMENT = "navigator.id.finishEnrollment"
+    if challenge != client_data.challenge:
+        raise ValueError("Wrong challenge! Was: %s, expecting: %s" % (
+            client_data.challenge.encode('hex'),
+            challenge.encode('hex')))
 
-    def __init__(self, app_id, facets=None, challenge=None):
-        self.app_id = app_id
-        self.app_param = H(app_id.encode('idna'))
-
-        if facets is None:
-            self.facets = []
-        else:
-            self.facets = facets
-
-        if challenge is None:
-            self.challenge = rand_bytes(32)
-        else:
-            self.challenge = challenge
-
-    def _validate_client_data(self, client_data):
-        """
-        Validate the client data.
-
-        clientData = {
-            "typ": TYPE_FINISH_ENROLLMENT,
-            "challenge": string, //b64 encoded challenge.
-            "origin": string, //Facet used
-        }
-
-        """
-        if client_data.typ != self.TYPE_FINISH_ENROLLMENT:
-            raise ValueError("Wrong type! Was: %s, expecting: %s" % (
-                client_data.typ, self.TYPE_FINISH_ENROLLMENT))
-
-        if self.challenge != client_data.challenge:
-            raise ValueError("Wrong challenge! Was: %s, expecting: %s" % (
-                client_data.challenge.encode('hex'),
-                self.challenge.encode('hex')))
-
-        if client_data.origin not in self.facets:
-            raise ValueError("Invalid facet! Was: %s, expecting one of: %r" % (
-                client_data.origin, self.facets))
-
-    def bind(self, response):
-        """
-        Complete registration, returning a U2FBinding.
-
-        registrationResponse = {
-            "registrationData": string, //b64 encoded raw registration response
-            "clientData": string, //b64 encoded JSON of ClientData
-        }
-
-        """
-        if not isinstance(response, RegisterResponse):
-            response = RegisterResponse(response)
-
-        self._validate_client_data(response.clientData)
-
-        raw_response = RawRegistrationResponse(
-            self.app_param,
-            response.clientParam,
-            websafe_decode(response['registrationData'])
-        )
-
-        raw_response.verify_csr_signature()
-        # TODO: Validate the certificate as well
-
-        return U2FBinding(self.app_id, self.facets, raw_response)
-
-    @property
-    def data(self):
-        """Return a RegisterRequest object."""
-        return RegisterRequest(
-            version=VERSION,
-            challenge=websafe_encode(self.challenge),
-            appId=self.app_id
-        )
-
-    @property
-    def json(self):
-        """Return a JSON RegisterRequest object to be sent to the client."""
-        return self.data.json
-
-    def serialize(self):
-        return json.dumps({
-            'appId': self.app_id,
-            'facets': self.facets,
-            'challenge': websafe_encode(self.challenge)
-        })
-
-    @classmethod
-    def deserialize(cls, serialized):
-        data = json.loads(serialized)
-        return cls(data['appId'], data['facets'],
-                   websafe_decode(data['challenge']))
+    if valid_facets is not None and client_data.origin not in valid_facets:
+        raise ValueError("Invalid facet! Was: %s, expecting one of: %r" % (
+            client_data.origin, valid_facets))
 
 
-class U2FBinding(object):
-
-    """A U2F binding object representing a completed registration."""
-
-    def __init__(self, app_id, facets, response):
-        self.app_id = app_id
-        self.facets = facets
-        self.pub_key = response.pub_key
-        self.key_handle = response.key_handle
-        self.certificate = response.certificate
-        self.response = response
-
-    def make_challenge(self, challenge=None):
-        return U2FChallenge(self, challenge)
-
-    def deserialize_challenge(self, serialized):
-        return U2FChallenge.deserialize(self, serialized)
-
-    def serialize(self):
-        return json.dumps({
-            'appId': self.app_id,
-            'facets': self.facets,
-            'response': self.response.serialize()
-        })
-
-    @classmethod
-    def deserialize(cls, serialized):
-        data = json.loads(serialized)
-        return cls(data['appId'], data['facets'],
-                   RawRegistrationResponse.deserialize(data['response']))
+class DeviceRegistration(JSONDict, WithAppId):
+    pass
 
 
-class U2FChallenge(object):
+def start_register(app_id, challenge=None):
+    if challenge is None:
+        challenge = rand_bytes(32)
 
-    """
-    A U2F challenge object representing an assertion challenge for a registered
-    U2F device.
-
-    """
-
-    TYPE_GET_ASSERTION = "navigator.id.getAssertion"
-
-    def __init__(self, binding, challenge=None):
-        self.binding = binding
-        self.app_param = H(binding.app_id.encode('idna'))
-
-        if challenge is None:
-            self.challenge = rand_bytes(32)
-        else:
-            self.challenge = challenge
-
-    def _validate_client_data(self, client_data):
-        """
-        clientData = {
-            "typ": TYPE_GET_ASSERTION,
-            "challenge": string, //b64 encoded challenge.
-            "origin": string, //Facet used
-        }
-
-        """
-
-        if client_data.typ != self.TYPE_GET_ASSERTION:
-            raise ValueError("Wrong type! Was: %s, expecting: %s" % (
-                client_data.typ, self.TYPE_GET_ASSERTION))
-
-        if self.challenge != client_data.challenge:
-            raise ValueError("Wrong challenge! Was: %s, expecting: %s" % (
-                client_data.challenge.encode('hex'),
-                self.challenge.encode('hex')))
-
-        if client_data.origin not in self.binding.facets:
-            raise ValueError("Invalid facet! Was: %s, expecting one of: %r" % (
-                client_data.origin, self.binding.facets))
-
-    def validate(self, response):
-        """
-        signResponse = {
-            "clientData": string, //b64 encoded JSON of ClientData
-            "signatureData": string, //b64 encoded raw sign response
-            "keyHandle": string, //b64 encoded key handle
-        }
-        """
-        if not isinstance(response, SignResponse):
-            response = SignResponse(response)
-
-        self._validate_client_data(response.clientData)
-
-        raw_response = RawAuthenticationResponse(
-            self.app_param,
-            response.clientParam,
-            websafe_decode(
-                response['signatureData']))
-        raw_response.verify_signature(self.binding.pub_key)
-
-        return raw_response.counter_int, raw_response.user_presence
-
-    @property
-    def data(self):
-        """Return a SignRequest."""
-        return SignRequest(
-            version=VERSION,
-            challenge=websafe_encode(self.challenge),
-            keyHandle=websafe_encode(self.binding.key_handle),
-            appId=self.binding.app_id
-        )
-
-    @property
-    def json(self):
-        """Return a JSON SignRequest object to be sent to the client."""
-        return self.data.json
-
-    def serialize(self):
-        return json.dumps({
-            'challenge': websafe_encode(self.challenge)
-        })
-
-    @classmethod
-    def deserialize(cls, binding, serialized):
-        data = json.loads(serialized)
-        return cls(binding, websafe_decode(data['challenge']))
+    return RegisterRequest(
+        version=VERSION,
+        appId=app_id,
+        challenge=websafe_encode(challenge)
+    )
 
 
-enrollment = U2FEnrollment.__call__
-deserialize_enrollment = U2FEnrollment.deserialize
-deserialize_binding = U2FBinding.deserialize
+def complete_register(request, response, valid_facets=None):
+    if not isinstance(request, RegisterRequest):
+        request = RegisterRequest(request)
+
+    if not isinstance(response, RegisterResponse):
+        response = RegisterResponse(response)
+
+    _validate_client_data(response.clientData, request.challenge,
+                          "navigator.id.finishEnrollment", valid_facets)
+
+    raw_response = RawRegistrationResponse(
+        request.appParam,
+        response.clientParam,
+        response.registrationData
+    )
+
+    raw_response.verify_csr_signature()
+
+    return DeviceRegistration(
+        appId=request.appId,
+        keyHandle=websafe_encode(raw_response.key_handle),
+        publicKey=websafe_encode(raw_response.pub_key)
+    ), raw_response.certificate
+
+
+def start_authenticate(device, challenge=None):
+    if challenge is None:
+        challenge = rand_bytes(32)
+
+    if not isinstance(device, DeviceRegistration):
+        device = DeviceRegistration(device)
+
+    return SignRequest(
+        version=VERSION,
+        appId=device.appId,
+        keyHandle=device.keyHandle,
+        challenge=websafe_encode(challenge)
+    )
+
+
+def verify_authenticate(device, request, response, valid_facets=None):
+    if not isinstance(device, DeviceRegistration):
+        device = DeviceRegistration(device)
+
+    if not isinstance(request, SignRequest):
+        request = SignRequest(request)
+
+    if not isinstance(response, SignResponse):
+        response = SignResponse(response)
+
+    _validate_client_data(response.clientData, request.challenge,
+                          "navigator.id.getAssertion", valid_facets)
+
+    raw_response = RawAuthenticationResponse(
+        device.appParam,
+        response.clientParam,
+        response.signatureData
+    )
+    raw_response.verify_signature(websafe_decode(device.publicKey))
+
+    return raw_response.counter_int, raw_response.user_presence

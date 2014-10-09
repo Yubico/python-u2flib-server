@@ -29,8 +29,8 @@ Note that this is intended for test/demo purposes, not production use!
 This example requires webob to be installed.
 """
 
-from u2flib_server.u2f_v2 import (enrollment, deserialize_enrollment,
-                                  deserialize_binding)
+from u2flib_server.u2f_v2 import (start_register, complete_register,
+                                  start_authenticate, verify_authenticate)
 from webob.dec import wsgify
 from webob import exc
 import logging as log
@@ -104,45 +104,35 @@ class U2FServer(object):
             self.users[username] = {}
 
         user = self.users[username]
-        enroll = enrollment(self.app_id, [self.facet])
-        user['_u2f_enroll_'] = enroll.serialize()
+        enroll = start_register(self.app_id)
+        user['_u2f_enroll_'] = enroll.json
         return enroll.json
 
     def bind(self, username, data):
         user = self.users[username]
-        enroll_data = user['_u2f_enroll_']
-        enroll = deserialize_enrollment(enroll_data)
-        data = json.loads(data)
-        if isinstance(data, list):
-            if len(data) != 1:
-                raise ValueError("Only single device enrollment supported!")
-            data = data[0]
-        binding = enroll.bind(data)
-        user['_u2f_binding_'] = binding.serialize()
+        binding, cert = complete_register(user['_u2f_enroll_'], data,
+                                          [self.facet])
+        user['_u2f_binding_'] = binding.json
 
         log.info("U2F device enrolled. Username: %s", username)
-        log.debug("Attestation certificate:\n%s",
-                  binding.certificate.as_text())
+        log.debug("Attestation certificate:\n%s", cert.as_text())
 
         return json.dumps(True)
 
     def sign(self, username):
         user = self.users[username]
-        binding_data = user['_u2f_binding_']
-        binding = deserialize_binding(binding_data)
+        binding = user['_u2f_binding_']
 
-        challenge = binding.make_challenge()
-        user['_u2f_challenge_'] = challenge.serialize()
+        challenge = start_authenticate(binding)
+        user['_u2f_challenge_'] = challenge.json
         return challenge.json
 
     def verify(self, username, data):
         user = self.users[username]
-        binding_data = user['_u2f_binding_']
-        binding = deserialize_binding(binding_data)
+        binding = user['_u2f_binding_']
 
-        challenge_data = user['_u2f_challenge_']
-        challenge = binding.deserialize_challenge(challenge_data)
-        c, t = challenge.validate(data)
+        challenge = user['_u2f_challenge_']
+        c, t = verify_authenticate(binding, challenge, data, [self.facet])
         return json.dumps({
             'touch': t,
             'counter': c

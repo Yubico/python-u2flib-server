@@ -28,8 +28,8 @@ Note that this is intended for test/demo purposes, not production use!
 """
 
 from yubiauth import YubiAuth
-from u2flib_server.u2f_v2 import (enrollment, deserialize_enrollment,
-                                  deserialize_binding)
+from u2flib_server.u2f_v2 import (start_register, complete_register,
+                                  start_authenticate, verify_authenticate)
 from webob.dec import wsgify
 from webob import exc
 import json
@@ -102,44 +102,35 @@ class U2FServer(object):
             user.set_password(password)
         except:
             user = self.auth.create_user(username, password)
-        enroll = enrollment(self.app_id, [self.origin])
-        user.attributes['_u2f_enroll_'] = enroll.serialize().encode('base64')
+        enroll = start_register(self.app_id)
+        user.attributes['_u2f_enroll_'] = enroll.json
         return enroll.json
 
     def bind(self, username, password, data):
         user = self._get_user(username, password)
-        enroll_data = user.attributes['_u2f_enroll_'].decode('base64')
-        enroll = deserialize_enrollment(enroll_data)
-        data = json.loads(data)
-        if isinstance(data, list):
-            if len(data) != 1:
-                raise ValueError("Only single device enrollment supported!")
-            data = data[0]
-        binding = enroll.bind(data)
-        user.attributes['_u2f_binding_'] = binding.serialize().encode('base64')
+        enroll = user.attributes['_u2f_enroll_']
+        binding, cert = complete_register(enroll, data, [self.origin])
+        user.attributes['_u2f_binding_'] = binding.json
+        user.attributes['_u2f_cert_'] = cert.as_pem()
         return json.dumps({
             'username': username[4:],
             'origin': self.origin,
-            'attest_cert': binding.certificate.as_pem()
+            'attest_cert': cert.as_pem()
         })
 
     def sign(self, username, password):
         user = self._get_user(username, password)
-        binding_data = user.attributes['_u2f_binding_'].decode('base64')
-        binding = deserialize_binding(binding_data)
-
-        challenge = binding.make_challenge()
-        user.attributes['_u2f_challenge_'] = challenge.serialize().encode('base64')
+        binding = user.attributes['_u2f_binding_']
+        challenge = start_authenticate(binding)
+        user.attributes['_u2f_challenge_'] = challenge.json
         return challenge.json
 
     def verify(self, username, password, data):
         user = self._get_user(username, password)
-        binding_data = user.attributes['_u2f_binding_'].decode('base64')
-        binding = deserialize_binding(binding_data)
+        binding = user.attributes['_u2f_binding_']
 
-        challenge_data = user.attributes['_u2f_challenge_'].decode('base64')
-        challenge = binding.deserialize_challenge(challenge_data)
-        c, t = challenge.validate(data)
+        challenge = user.attributes['_u2f_challenge_']
+        c, t = verify_authenticate(binding, challenge, data, [self.origin])
         return json.dumps({
             'touch': t,
             'counter': c

@@ -21,41 +21,40 @@ FACET = 'https://www.example.com'
 FACETS = [FACET]
 
 
-def test_enroll_soft_u2f():
-    device = SoftU2FDevice()
+def test_register_soft_u2f():
+    token = SoftU2FDevice()
 
-    enrollment = u2f.enrollment(APP_ID, FACETS)
+    request = u2f.start_register(APP_ID)
+    response = token.register(request.json, FACET)
 
-    response = device.register(enrollment.json, FACET)
-
-    binding = enrollment.bind(response)
-    assert binding
+    device, cert = u2f.complete_register(request, response)
+    assert device
 
 
-def test_challenge_soft_u2f():
-    device = SoftU2FDevice()
-    enrollment = u2f.enrollment(APP_ID, FACETS)
-    response = device.register(enrollment.json, FACET)
-    binding = enrollment.bind(response)
+def test_authenticate_soft_u2f():
+    token = SoftU2FDevice()
+    request = u2f.start_register(APP_ID)
+    response = token.register(request.json, FACET)
+    device, cert = u2f.complete_register(request, response)
 
-    challenge1 = binding.make_challenge()
-    challenge2 = binding.make_challenge()
+    challenge1 = u2f.start_authenticate(device)
+    challenge2 = u2f.start_authenticate(device)
 
-    response2 = device.getAssertion(challenge2.json, FACET)
-    response1 = device.getAssertion(challenge1.json, FACET)
+    response2 = token.getAssertion(challenge2.json, FACET)
+    response1 = token.getAssertion(challenge1.json, FACET)
 
-    assert challenge1.validate(response1)
-    assert challenge2.validate(response2)
+    assert u2f.verify_authenticate(device, challenge1, response1)
+    assert u2f.verify_authenticate(device, challenge2, response2)
 
     try:
-        challenge1.validate(response2)
+        u2f.verify_authenticate(device, challenge1, response2)
     except:
         pass
     else:
         assert False, "Incorrect validation should fail!"
 
     try:
-        challenge2.validate(response1)
+        u2f.verify_authenticate(device, challenge2, response1)
     except:
         pass
     else:
@@ -63,28 +62,25 @@ def test_challenge_soft_u2f():
 
 
 def test_wrong_facet():
-    device = SoftU2FDevice()
-
-    enrollment = u2f.enrollment(APP_ID, FACETS)
-
-    response1 = device.register(enrollment.json, "http://wrongfacet.com")
+    token = SoftU2FDevice()
+    request = u2f.start_register(APP_ID)
+    response = token.register(request.json, "http://wrongfacet.com")
 
     try:
-        binding = enrollment.bind(response1)
+        u2f.complete_register(request, response, FACETS)
     except:
         pass
     else:
         assert False, "Incorrect facet should fail!"
 
-    response2 = device.register(enrollment.json, FACET)
-    binding = enrollment.bind(response2)
+    response2 = token.register(request.json, FACET)
+    device, cert = u2f.complete_register(request, response2)
 
-    challenge = binding.make_challenge()
-
-    response = device.getAssertion(challenge.json, "http://notright.com")
+    challenge = u2f.start_authenticate(device)
+    response = token.getAssertion(challenge.json, "http://notright.com")
 
     try:
-        challenge.validate(response)
+        u2f.verify_authenticate(device, challenge, response, FACETS)
     except:
         pass
     else:

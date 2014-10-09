@@ -16,7 +16,8 @@
 from M2Crypto import EC, BIO
 from u2flib_server.utils import (websafe_encode, websafe_decode,
                                  sha_256 as H, rand_bytes)
-import json
+from u2flib_server.jsapi import (RegisterRequest, RegisterResponse,
+                                 SignRequest, SignResponse, ClientData)
 import struct
 
 CURVE = EC.NID_X9_62_prime256v1
@@ -51,27 +52,27 @@ class SoftU2FDevice(object):
         self.keys = {}
         self.counter = 0
 
-    def register(self, data, facet="https://www.example.com", ):
+    def register(self, request, facet="https://www.example.com"):
         """
-        data = {
+        RegisterRequest = {
             "version": "U2F_V2",
             "challenge": string, //b64 encoded challenge
             "appId": string, //app_id
         }
         """
-        if isinstance(data, basestring):
-            data = json.loads(data)
+        if not isinstance(request, RegisterRequest):
+            request = RegisterRequest(request)
 
-        if data['version'] != "U2F_V2":
-            raise ValueError("Unsupported U2F version: %s" % data['version'])
+        if request.version != "U2F_V2":
+            raise ValueError("Unsupported U2F version: %s" % request.version)
 
         # Client data
-        client_data = {
-            'typ': "navigator.id.finishEnrollment",
-            'challenge': data['challenge'],
-            'origin': facet
-        }
-        client_data = json.dumps(client_data)
+        client_data = ClientData(
+            typ='navigator.id.finishEnrollment',
+            challenge=request['challenge'],
+            origin=facet
+        )
+        client_data = client_data.json
         client_param = H(client_data)
 
         # ECC key generation
@@ -81,7 +82,7 @@ class SoftU2FDevice(object):
 
         # Store
         key_handle = rand_bytes(64)
-        app_param = H(data['appId'])
+        app_param = request.appParam
         self.keys[key_handle] = (privu, app_param)
 
         # Attestation signature
@@ -93,12 +94,13 @@ class SoftU2FDevice(object):
         raw_response = chr(0x05) + pub_key + chr(len(key_handle)) + \
             key_handle + cert + signature
 
-        return json.dumps({
-            "registrationData": websafe_encode(raw_response),
-            "clientData": websafe_encode(client_data),
-        })
+        return RegisterResponse(
+            registrationData=websafe_encode(raw_response),
+            clientData=websafe_encode(client_data),
+        )
 
-    def getAssertion(self, data, facet="https://www.example.com", touch=False):
+    def getAssertion(self, request, facet="https://www.example.com",
+                     touch=False):
         """
         signData = {
             'version': "U2F_V2",
@@ -107,23 +109,23 @@ class SoftU2FDevice(object):
             'keyHandle': websafe_encode(self.binding.key_handle),
         }
         """
-        if isinstance(data, basestring):
-            data = json.loads(data)
+        if not isinstance(request, SignRequest):
+            request = SignRequest(request)
 
-        if data['version'] != "U2F_V2":
-            raise ValueError("Unsupported U2F version: %s" % data['version'])
+        if request.version != "U2F_V2":
+            raise ValueError("Unsupported U2F version: %s" % request.version)
 
-        key_handle = websafe_decode(data['keyHandle'])
-        if not key_handle in self.keys:
+        key_handle = websafe_decode(request.keyHandle)
+        if key_handle not in self.keys:
             raise ValueError("Unknown key handle!")
 
         # Client data
-        client_data = {
-            'typ': "navigator.id.getAssertion",
-            'challenge': data['challenge'],
-            'origin': facet
-        }
-        client_data = json.dumps(client_data)
+        client_data = ClientData(
+            typ="navigator.id.getAssertion",
+            challenge=request['challenge'],
+            origin=facet
+        )
+        client_data = client_data.json
         client_param = H(client_data)
 
         # Unwrap:
@@ -140,8 +142,8 @@ class SoftU2FDevice(object):
         signature = privu.sign_dsa_asn1(digest)
         raw_response = touch + counter + signature
 
-        return json.dumps({
-            "clientData": websafe_encode(client_data),
-            "signatureData": websafe_encode(raw_response),
-            "challenge": data['challenge'],
-        })
+        return SignResponse(
+            clientData=websafe_encode(client_data),
+            signatureData=websafe_encode(raw_response),
+            keyHandle=request.keyHandle
+        )

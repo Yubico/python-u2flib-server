@@ -1,3 +1,7 @@
+* Version 3.0.0 (unreleased)
+
+  * Complete API rewrite to simplify library significantly.
+
 * Version 2.0.0 (released 2014-09-26)
 
   * Updated to the latest U2F_V2 standard.
