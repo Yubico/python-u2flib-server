@@ -1,3 +1,7 @@
+* Version 3.0.1 (unreleased)
+
+  * Fix JSONDict not pickling.
+
 * Version 3.0.0 (released 2014-10-09)
 
   * Complete API rewrite to simplify library significantly.
