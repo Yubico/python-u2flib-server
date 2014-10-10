@@ -11,7 +11,6 @@ __all__ = [
 
 
 class JSONDict(dict):
-    __getattr__ = dict.__getitem__
 
     def __init__(self, *args, **kwargs):
         if len(args) == 1:
@@ -27,6 +26,13 @@ class JSONDict(dict):
             self.update(data)
         else:
             raise TypeError("Unexpected type! Expected one of dict or string")
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError("'%s' object has no attribute '%s'" %
+                                 (type(self).__name__, key))
 
     @property
     def json(self):
