@@ -1,18 +1,9 @@
 == u2flib-server ==
 Provides functionality for working with the server side aspects of the U2F
-protocol as defined in the FIDO
-specifications, available here: http://fidoalliance.org/specifications/download
+protocol as defined in the link:http://fidoalliance.org/specifications/download[FIDO specifications].
 
-=== License ===
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+To read more about U2F and how to use a U2F library, visit
+link:http://developers.yubico.com/U2F[developers.yubico.com/U2F].
 
 === Dependencies ===
 u2flib-host depends on M2Crypto. On a Ubuntu system, this can be installed with
