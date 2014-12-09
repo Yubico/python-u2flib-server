@@ -60,6 +60,7 @@ class SoftU2FDevice(object):
             "appId": string, //app_id
         }
         """
+
         if not isinstance(request, RegisterRequest):
             request = RegisterRequest(request)
 
