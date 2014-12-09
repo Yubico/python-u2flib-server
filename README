@@ -6,13 +6,13 @@ To read more about U2F and how to use a U2F library, visit
 link:http://developers.yubico.com/U2F[developers.yubico.com/U2F].
 
 === Dependencies ===
-u2flib-host depends on M2Crypto. On a Ubuntu system, this can be installed with
+u2flib-server depends on M2Crypto. On a Ubuntu system, this can be installed with
 the following command: 
 
   $ apt-get install python-m2crypto
 
 === Installation ===
-u2flib-host is installable by running the following command:
+u2flib-server is installable by running the following command:
 
   $ python setup.py install
 
