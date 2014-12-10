@@ -18,7 +18,19 @@ class MyTestCase(unittest.TestCase):  # TODO: Use Nosetest instead of unittest
         assert device
 
     def test_authenticate_soft_u2f(self):
-        pass  # See corresponding method in test_u2f_v2.py
+        # Register
+        token = SoftU2FDevice()
+        request_data = u2f.start_register(APP_ID, [])
+        response = token.register(request_data.registerRequests[0].json, FACET)
+        device, cert = u2f.complete_register(request_data, response)
+
+        # Authenticate
+        sign_request = u2f.start_authenticate([device])
+
+        response1 = token.getAssertion(sign_request.authenticateRequests[0].json, FACET)
+
+        assert u2f.verify_authenticate([device], sign_request, response1)
+
 
 if __name__ == "__main__":
     unittest.main()

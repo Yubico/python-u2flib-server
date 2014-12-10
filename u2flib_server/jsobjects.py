@@ -27,22 +27,9 @@ class RegisterRequestData(JSONDict):
         return map(RegisterRequest, self['registerRequests'])
 
 
-class RegisterResponseData(JSONDict, WithProps):
-
-    @property
-    def registerResponse(self):
-        return RegisterResponse(self['registerResponse'])
-
-
 class AuthenticateRequestData(JSONDict):
 
     @property
     def authenticateRequests(self):
         return map(SignRequest, self['authenticateRequests'])
 
-
-class AuthenticateResponseData(JSONDict, WithProps):
-
-    @property
-    def authenticateResponse(self):
-        return SignResponse(self['authenticateResponse'])

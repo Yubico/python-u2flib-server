@@ -110,6 +110,7 @@ class SoftU2FDevice(object):
             'keyHandle': websafe_encode(self.binding.key_handle),
         }
         """
+
         if not isinstance(request, SignRequest):
             request = SignRequest(request)
 
