@@ -1,19 +1,9 @@
-from jsapi import (JSONDict, RegisterRequest, RegisterResponse,
-                                 SignRequest, SignResponse)
+from jsapi import (JSONDict, RegisterRequest, SignRequest)
 
 __all__ = [
     'RegisterRequestData',
-    'RegisterResponseData',
-    'AuthenticateRequestData',
-    'AuthenticateResponseData'
+    'AuthenticateRequestData'
 ]
-
-
-class WithProps(object):
-
-    @property
-    def properties(self):
-        return self.get('properties', {})
 
 
 class RegisterRequestData(JSONDict):
@@ -26,6 +16,9 @@ class RegisterRequestData(JSONDict):
     def registerRequests(self):
         return map(RegisterRequest, self['registerRequests'])
 
+    def getRegisterRequest(self, response):
+        return self.registerRequests[0]
+
 
 class AuthenticateRequestData(JSONDict):
 
@@ -33,3 +26,6 @@ class AuthenticateRequestData(JSONDict):
     def authenticateRequests(self):
         return map(SignRequest, self['authenticateRequests'])
 
+    def getAuthenticateRequest(self, response):
+        return next(req for req in self.authenticateRequests
+                    if req.keyHandle == response.keyHandle)

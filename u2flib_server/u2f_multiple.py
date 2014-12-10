@@ -20,27 +20,25 @@ def start_register(app_id, devices, challenge=None):
     )
 
 
-# TODO: Create something similar to java-u2flib-server's RegisterRequestData.getRegisterRequests(), instead of request_data.registerRequests[0]
 def complete_register(request_data, response, valid_facets=None):
     resp = RegisterResponse(response)
-    return u2f_v2.complete_register(request_data.registerRequests[0],
+    return u2f_v2.complete_register(request_data.getRegisterRequest(response),
                                     resp,
                                     valid_facets)
 
 
 def start_authenticate(devices, challenge=None):
     sign_requests = []
-    challenge = challenge or rand_bytes(32)
 
     for dev in devices:
-        challenge = u2f_v2.start_authenticate(dev, challenge)
-        sign_requests.append(challenge)
+        sign_request = u2f_v2.start_authenticate(dev,
+                                                 challenge or rand_bytes(32))
+        sign_requests.append(sign_request)
     return AuthenticateRequestData(authenticateRequests=sign_requests)
 
 
 def verify_authenticate(devices, request_data, response, valid_facets=None):
-    sign_request = next(req for req in request_data.authenticateRequests
-                        if req.keyHandle == response.keyHandle)
+    sign_request = request_data.getAuthenticateRequest(response)
 
     device = next(dev for dev in devices
                   if dev.keyHandle == sign_request.keyHandle)
