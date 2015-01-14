@@ -33,6 +33,7 @@ setup(
     version=get_version(),
     author='Dain Nilsson',
     author_email='dain@yubico.com',
+    description='Python based U2F server library',
     maintainer='Yubico Open Source Maintainers',
     maintainer_email='ossmaint@yubico.com',
     url='https://github.com/Yubico/python-u2flib-server',
