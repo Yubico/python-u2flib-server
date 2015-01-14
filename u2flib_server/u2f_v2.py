@@ -31,6 +31,15 @@ __all__ = [
 
 VERSION = 'U2F_V2'
 
+FIXSIG = [
+    'CN=Yubico U2F EE Serial 364846018',
+    'CN=Yubico U2F EE Serial 1086591525',
+    'CN=Yubico U2F EE Serial 1973679733',
+    'CN=Yubico U2F EE Serial 13503277888',
+    'CN=Yubico U2F EE Serial 13831167861',
+    'CN=Yubico U2F EE Serial 14803321578'
+]
+
 
 class RawRegistrationResponse(object):
 
@@ -59,7 +68,7 @@ class RawRegistrationResponse(object):
         self.key_handle = data[:kh_len]
         data = data[kh_len:]
 
-        self.certificate = X509.load_cert_der_string(data)
+        self.certificate = self._fixsig(X509.load_cert_der_string(data))
         self.signature = data[len(self.certificate.as_der()):]
 
     def __str__(self):
@@ -74,6 +83,14 @@ class RawRegistrationResponse(object):
         pubkey.verify_update(data)
         if not pubkey.verify_final(self.signature) == 1:
             raise Exception('Attestation signature verification failed!')
+
+    def _fixsig(self, cert):
+        subject = cert.get_subject().as_text()
+        if subject in FIXSIG:  # Set unused bits in signature to 0
+            der = list(cert.as_der())
+            der[-257] = chr(0)
+            cert = X509.load_cert_der_string(''.join(der))
+        return cert
 
     def serialize(self):
         return websafe_encode(self.app_param + self.chal_param + self.data)
