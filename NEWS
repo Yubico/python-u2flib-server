@@ -1,4 +1,4 @@
-* Version 3.0.1 (unreleased)
+* Version 3.0.1 (released 2015-01-14)
  ** Fix JSONDict not pickling.
  ** Set 0 unused bits in attestation certificate signatures with known unused
     bits.
