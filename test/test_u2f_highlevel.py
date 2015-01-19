@@ -44,7 +44,7 @@ def test_authenticate_single_soft_u2f():
 def test_authenticate_multiple_soft_u2f():
     # Register
     device1, token1 = register_token()
-    device2, token2 = register_token()
+    device2, token2 = register_token([device1])
 
     # Authenticate
     auth_request_data = u2f.start_authenticate([device1, device2])
@@ -59,9 +59,9 @@ def test_authenticate_multiple_soft_u2f():
                                    response)
 
 
-def register_token():
+def register_token(devices=[]):
     token = SoftU2FDevice()
-    request_data = u2f.start_register(APP_ID, [])
+    request_data = u2f.start_register(APP_ID, devices)
     response = token.register(request_data.registerRequests[0].json, FACET)
     device, cert = u2f.complete_register(request_data, response)
     return device, token
