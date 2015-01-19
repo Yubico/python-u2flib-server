@@ -60,6 +60,7 @@ class SoftU2FDevice(object):
             "appId": string, //app_id
         }
         """
+
         if not isinstance(request, RegisterRequest):
             request = RegisterRequest(request)
 
@@ -109,6 +110,7 @@ class SoftU2FDevice(object):
             'keyHandle': websafe_encode(self.binding.key_handle),
         }
         """
+
         if not isinstance(request, SignRequest):
             request = SignRequest(request)
 

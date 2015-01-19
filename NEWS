@@ -1,3 +1,6 @@
+* Version 3.1.0 (unreleased)
+ ** Added U2F high-level API.
+
 * Version 3.0.1 (released 2015-01-14)
  ** Fix JSONDict not pickling.
  ** Set 0 unused bits in attestation certificate signatures with known unused

@@ -180,6 +180,7 @@ def start_register(app_id, challenge=None):
 
 
 def complete_register(request, response, valid_facets=None):
+
     if not isinstance(request, RegisterRequest):
         request = RegisterRequest(request)
 
