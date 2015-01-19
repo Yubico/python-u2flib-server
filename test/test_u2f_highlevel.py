@@ -16,9 +16,8 @@
 from u2flib_server import u2f
 from soft_u2f_v2 import SoftU2FDevice
 
-APP_ID = 'http://www.example.com/appid'
-FACET = 'https://www.example.com'
-FACETS = [FACET]
+APP_ID = 'https://www.example.com'
+FACET = APP_ID
 
 
 def test_register_soft_u2f():
