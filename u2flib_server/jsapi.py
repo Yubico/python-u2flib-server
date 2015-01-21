@@ -3,6 +3,7 @@ import json
 
 __all__ = [
     'ClientData',
+    'DeviceRegistration',
     'RegisterRequest',
     'RegisterResponse',
     'SignRequest',
@@ -40,6 +41,10 @@ class JSONDict(dict):
     def json(self):
         return json.dumps(self)
 
+    @classmethod
+    def wrap(cls, data):
+        return data if isinstance(data, cls) else cls(data)
+
 
 class WithAppId(object):
 
@@ -53,6 +58,10 @@ class WithChallenge(object):
     @property
     def challenge(self):
         return websafe_decode(self['challenge'])
+
+
+class DeviceRegistration(JSONDict, WithAppId):
+    pass
 
 
 class ClientData(JSONDict, WithChallenge):

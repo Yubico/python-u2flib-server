@@ -29,8 +29,9 @@ Note that this is intended for test/demo purposes, not production use!
 This example requires webob to be installed.
 """
 
-from u2flib_server.u2f_v2 import (start_register, complete_register,
-                                  start_authenticate, verify_authenticate)
+from u2flib_server.jsapi import DeviceRegistration
+from u2flib_server.u2f import (start_register, complete_register,
+                               start_authenticate, verify_authenticate)
 from webob.dec import wsgify
 from webob import exc
 import logging as log
@@ -57,10 +58,9 @@ def get_origin(environ):
 class U2FServer(object):
 
     """
-    Very basic server providing a REST API to enroll a U2F device with
-    a user, and to perform a sign with the enrolled device.
-    Only one device per uses is supported, and only one challenge is valid
-    at a time.
+    Very basic server providing a REST API to enroll one or more U2F device with
+    a user, and to perform authentication with the enrolled devices.
+    Only one challenge is valid at a time.
 
     Four calls are provided: enroll, bind, sign and verify. Each of these
     expects a username parameter, and bind and verify expect a
@@ -104,7 +104,8 @@ class U2FServer(object):
             self.users[username] = {}
 
         user = self.users[username]
-        enroll = start_register(self.app_id)
+        devices = map(DeviceRegistration.wrap, user.get('_u2f_devices_', []))
+        enroll = start_register(self.app_id, devices)
         user['_u2f_enroll_'] = enroll.json
         return enroll.json
 
@@ -112,7 +113,9 @@ class U2FServer(object):
         user = self.users[username]
         binding, cert = complete_register(user['_u2f_enroll_'], data,
                                           [self.facet])
-        user['_u2f_binding_'] = binding.json
+        devices = map(DeviceRegistration.wrap, user.get('_u2f_devices_', []))
+        devices.append(binding)
+        user['_u2f_devices_'] = [d.json for d in devices]
 
         log.info("U2F device enrolled. Username: %s", username)
         log.debug("Attestation certificate:\n%s", cert.as_text())
@@ -121,18 +124,17 @@ class U2FServer(object):
 
     def sign(self, username):
         user = self.users[username]
-        binding = user['_u2f_binding_']
-
-        challenge = start_authenticate(binding)
+        devices = map(DeviceRegistration.wrap, user.get('_u2f_devices_', []))
+        challenge = start_authenticate(devices)
         user['_u2f_challenge_'] = challenge.json
         return challenge.json
 
     def verify(self, username, data):
         user = self.users[username]
-        binding = user['_u2f_binding_']
+        devices = map(DeviceRegistration.wrap, user.get('_u2f_devices_', []))
 
         challenge = user['_u2f_challenge_']
-        c, t = verify_authenticate(binding, challenge, data, [self.facet])
+        c, t = verify_authenticate(devices, challenge, data, [self.facet])
         return json.dumps({
             'touch': t,
             'counter': c

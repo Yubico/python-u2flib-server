@@ -14,7 +14,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from u2flib_server import u2f_v2
-from u2flib_server.jsapi import AuthenticateRequestData, RegisterRequestData
+from u2flib_server.jsapi import (AuthenticateRequestData, RegisterRequestData,
+                                 SignResponse, RegisterResponse)
 from u2flib_server.utils import rand_bytes
 
 
@@ -43,8 +44,8 @@ def start_register(app_id, devices, challenge=None):
 
 
 def complete_register(request_data, response, valid_facets=None):
-    if not isinstance(request_data, RegisterRequestData):
-        request_data = RegisterRequestData(request_data)
+    request_data = RegisterRequestData.wrap(request_data)
+    response = RegisterResponse.wrap(response)
 
     return u2f_v2.complete_register(request_data.getRegisterRequest(response),
                                     response,
@@ -59,8 +60,8 @@ def start_authenticate(devices, challenge=None):
 
 
 def verify_authenticate(devices, request_data, response, valid_facets=None):
-    if not isinstance(request_data, AuthenticateRequestData):
-        request_data = AuthenticateRequestData(request_data)
+    request_data = AuthenticateRequestData.wrap(request_data)
+    response = SignResponse.wrap(response)
 
     sign_request = request_data.getAuthenticateRequest(response)
 

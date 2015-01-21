@@ -30,7 +30,7 @@ Registration is initiated by sending a request to the server:
 
 ----
 $ curl http://localhost:8081/enroll
-{"challenge": "D2pzTPZa7bq69ABuiGQILo9zcsTURP26RLifTyCkilc", "version": "U2F_V2", "appId": "http://localhost:8081"}
+{"authenticateRequests": [], "registerRequests": [{"challenge": "9s80ruHc6q9shJM5WLfOmz-ejb_Rm8dmWCnOvgZ2ovw", "version": "U2F_V2", "appId": "http://localhost:8081"}]}
 ----
 The RegisterRequest data is then fed to the U2F client, resulting in the
 RegisterResponse data, which is passed back to the server:
@@ -46,7 +46,7 @@ request to the server:
 
 ----
 $ curl http://localhost:8081/sign
-{"keyHandle": "RCH2egNK75a3NM4yEr-UofHAe1CAkcKTOzia6R-l_fXQrkOr2TrME21nZEwFaAmEjuEmjgmIWfeTYZQ0vApmnA", "challenge": "Ql05duFdQj6oc_mZf1Lt08PyXWJJxN5xe2SagdUGCxo", "version": "U2F_V2", "appId": "http://localhost:8081/app-identity"}
+{"authenticateRequests": [{"challenge": "EHuxwx0Ayh5F8g7sFmSUFdfY945EWWK4hyhOKivjv7g", "version": "U2F_V2", "keyHandle": "bxXoPvBA6WPHbqGMjrGBDclMXh8O_qqPXGBPlAkmuIh8CO3ttWWLDzX27xGzemMBxpI6kQXKgURztp9sqEBrCA", "appId": "http://localhost:8081"}]}
 ----
 The AuthenticateRequest data is then fed to the U2F client, resulting in an
 AuthenticateResponse object which is passed back to the server:

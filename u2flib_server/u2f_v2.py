@@ -15,8 +15,7 @@
 
 from M2Crypto import X509
 from u2flib_server.jsapi import (RegisterRequest, RegisterResponse,
-                                 SignRequest, SignResponse, JSONDict,
-                                 WithAppId)
+                                 SignRequest, SignResponse, DeviceRegistration)
 from u2flib_server.utils import (pub_key_from_der, sha_256, websafe_decode,
                                  websafe_encode, rand_bytes)
 import struct
@@ -164,10 +163,6 @@ def _validate_client_data(client_data, challenge, typ, valid_facets):
             client_data.origin, valid_facets))
 
 
-class DeviceRegistration(JSONDict, WithAppId):
-    pass
-
-
 def start_register(app_id, challenge=None):
     if challenge is None:
         challenge = rand_bytes(32)
@@ -180,12 +175,8 @@ def start_register(app_id, challenge=None):
 
 
 def complete_register(request, response, valid_facets=None):
-
-    if not isinstance(request, RegisterRequest):
-        request = RegisterRequest(request)
-
-    if not isinstance(response, RegisterResponse):
-        response = RegisterResponse(response)
+    request = RegisterRequest.wrap(request)
+    response = RegisterResponse.wrap(response)
 
     _validate_client_data(response.clientData, request.challenge,
                           "navigator.id.finishEnrollment", valid_facets)
@@ -206,11 +197,10 @@ def complete_register(request, response, valid_facets=None):
 
 
 def start_authenticate(device, challenge=None):
+    device = DeviceRegistration.wrap(device)
+
     if challenge is None:
         challenge = rand_bytes(32)
-
-    if not isinstance(device, DeviceRegistration):
-        device = DeviceRegistration(device)
 
     return SignRequest(
         version=VERSION,
@@ -221,14 +211,9 @@ def start_authenticate(device, challenge=None):
 
 
 def verify_authenticate(device, request, response, valid_facets=None):
-    if not isinstance(device, DeviceRegistration):
-        device = DeviceRegistration(device)
-
-    if not isinstance(request, SignRequest):
-        request = SignRequest(request)
-
-    if not isinstance(response, SignResponse):
-        response = SignResponse(response)
+    device = DeviceRegistration.wrap(device)
+    request = SignRequest.wrap(request)
+    response = SignResponse.wrap(response)
 
     _validate_client_data(response.clientData, request.challenge,
                           "navigator.id.getAssertion", valid_facets)
