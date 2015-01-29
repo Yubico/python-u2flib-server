@@ -1,3 +1,18 @@
+#    Copyright (C) 2014  Yubico AB
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from u2flib_server.utils import websafe_decode, sha_256
 import json
 
@@ -124,3 +139,37 @@ class AuthenticateRequestData(JSONDict):
     def getAuthenticateRequest(self, response):
         return next(req for req in self.authenticateRequests
                     if req.keyHandle == response.keyHandle)
+
+
+#
+# Metadata
+#
+
+
+class VendorInfo(JSONDict):
+    pass
+
+
+class Selector(JSONDict):
+    pass
+
+
+class DeviceInfo(JSONDict):
+
+    @property
+    def selectors(self):
+        selectors = self.get('selectors')
+        if selectors is None:
+            return None
+        return map(Selector, selectors)
+
+
+class MetadataObject(JSONDict):
+
+    @property
+    def vendorInfo(self):
+        return VendorInfo(self['vendorInfo'])
+
+    @property
+    def devices(self):
+        return map(DeviceInfo, self['devices'])
