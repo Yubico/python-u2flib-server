@@ -13,11 +13,11 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from u2flib_server.jsapi import JSONDict
 from u2flib_server.attestation.metadata import MetadataProvider
 from u2flib_server.attestation.resolvers import create_resolver
 from u2flib_server.attestation.data import YUBICO
 from M2Crypto import X509
+import json
 
 ATTESTATION_CERT = """
 MIICGzCCAQWgAwIBAgIEdaP2dTALBgkqhkiG9w0BAQswLjEsMCoGA1UEAxMjWXViaWNvIFUyRiBS
@@ -47,3 +47,30 @@ def test_provider():
     attestation = provider.get_attestation(cert)
 
     assert attestation.trusted
+
+
+def test_versioning_newer():
+    resolver = create_resolver(YUBICO)
+    newer = json.loads(json.dumps(YUBICO))
+    newer['version'] = newer['version'] + 1
+    newer['trustedCertificates'] = []
+
+    resolver.add_metadata(newer)
+
+    cert = X509.load_cert_der_string(ATTESTATION_CERT)
+    metadata = resolver.resolve(cert)
+
+    assert metadata is None
+
+
+def test_versioning_older():
+    resolver = create_resolver(YUBICO)
+    newer = json.loads(json.dumps(YUBICO))
+    newer['trustedCertificates'] = []
+
+    resolver.add_metadata(newer)
+
+    cert = X509.load_cert_der_string(ATTESTATION_CERT)
+    metadata = resolver.resolve(cert)
+
+    assert metadata.identifier == '2fb54029-7613-4f1d-94f1-fb876c14a6fe'

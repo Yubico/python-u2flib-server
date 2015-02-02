@@ -25,12 +25,29 @@ import json
 class MetadataResolver(object):
 
     def __init__(self):
+        self._identifiers = {}  # identifier -> Metadata
         self._certs = {}  # Subject -> Cert
         self._metadata = {}  # Cert -> Metadata
 
     def add_metadata(self, metadata):
         metadata = MetadataObject.wrap(metadata)
 
+        if metadata.identifier in self._identifiers:
+            existing = self._identifiers[metadata.identifier]
+            if metadata.version <= existing.version:
+                return  # Older version
+            else:
+                # Re-index everything
+                self._identifiers[metadata.identifier] = metadata
+                self._certs.clear()
+                self._metadata.clear()
+                for metadata in self._identifiers.values():
+                    self._index(metadata)
+        else:
+            self._identifiers[metadata.identifier] = metadata
+            self._index(metadata)
+
+    def _index(self, metadata):
         for cert_pem in metadata.trustedCertificates:
             cert_der = ''.join(cert_pem.splitlines()[1:-1]).decode('base64')
             cert = X509.load_cert_der_string(cert_der)
