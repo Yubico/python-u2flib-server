@@ -39,7 +39,7 @@ setup(
     url='https://github.com/Yubico/python-u2flib-server',
     packages=['u2flib_server', 'u2flib_server.attestation'],
     setup_requires=['nose>=1.0'],
-    install_requires=['M2Crypto', 'pyasn1', 'pyasn1-modules'],
+    install_requires=['M2Crypto', 'pyasn1>=0.1.7', 'pyasn1-modules'],
     test_suite='nose.collector',
     tests_require=[''],
     cmdclass={'release': release},
