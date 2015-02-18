@@ -31,7 +31,6 @@ __all__ = [
 VERSION = 'U2F_V2'
 
 FIXSIG = [
-    'CN=Yubico U2F EE Serial 364846018',
     'CN=Yubico U2F EE Serial 776137165',
     'CN=Yubico U2F EE Serial 1086591525',
     'CN=Yubico U2F EE Serial 1973679733',
