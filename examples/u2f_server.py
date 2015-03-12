@@ -111,7 +111,7 @@ class U2FServer(object):
 
     def bind(self, username, data):
         user = self.users[username]
-        binding, cert = complete_register(user['_u2f_enroll_'], data,
+        binding, cert = complete_register(user.pop('_u2f_enroll_'), data,
                                           [self.facet])
         devices = map(DeviceRegistration.wrap, user.get('_u2f_devices_', []))
         devices.append(binding)
@@ -133,7 +133,7 @@ class U2FServer(object):
         user = self.users[username]
         devices = map(DeviceRegistration.wrap, user.get('_u2f_devices_', []))
 
-        challenge = user['_u2f_challenge_']
+        challenge = user.pop('_u2f_challenge_')
         c, t = verify_authenticate(devices, challenge, data, [self.facet])
         return json.dumps({
             'touch': t,
