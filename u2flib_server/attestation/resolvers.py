@@ -85,6 +85,7 @@ def _add_data(resolver, data):
             data = _load_from_dir(data)
         elif os.path.isfile(data):
             data = _load_from_file(data)
+        return _add_data(resolver, data)
     if data is not None:
         resolver.add_metadata(data)
 
