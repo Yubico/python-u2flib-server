@@ -1,7 +1,7 @@
 Author: Yubico
 Basename: python-u2flib-server
 Homepage: http://opensource.yubico.com/python-u2flib-server/
-License: GPL-3.0+
+License: BSD-2-Clause
 Name: Python U2Flib Server
 Project: python-u2flib-server
 Summary: Python based U2F server library
