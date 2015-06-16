@@ -27,73 +27,74 @@
 
 from u2flib_server import u2f_v2 as u2f
 from soft_u2f_v2 import SoftU2FDevice
+import unittest
 
 APP_ID = 'http://www.example.com/appid'
 FACET = 'https://www.example.com'
 FACETS = [FACET]
 
 
-def test_register_soft_u2f():
-    token = SoftU2FDevice()
+class U2fV2Test(unittest.TestCase):
 
-    request = u2f.start_register(APP_ID)
-    response = token.register(request.json, FACET)
+    def test_register_soft_u2f(self):
+        token = SoftU2FDevice()
 
-    device, cert = u2f.complete_register(request, response)
-    assert device
+        request = u2f.start_register(APP_ID)
+        response = token.register(request.json, FACET)
 
+        device, cert = u2f.complete_register(request, response)
+        assert device
 
-def test_authenticate_soft_u2f():
-    token = SoftU2FDevice()
-    request = u2f.start_register(APP_ID)
-    response = token.register(request.json, FACET)
-    device, cert = u2f.complete_register(request, response)
+    def test_authenticate_soft_u2f(self):
+        token = SoftU2FDevice()
+        request = u2f.start_register(APP_ID)
+        response = token.register(request.json, FACET)
+        device, cert = u2f.complete_register(request, response)
 
-    challenge1 = u2f.start_authenticate(device)
-    challenge2 = u2f.start_authenticate(device)
+        challenge1 = u2f.start_authenticate(device)
+        challenge2 = u2f.start_authenticate(device)
 
-    response2 = token.getAssertion(challenge2.json, FACET)
-    response1 = token.getAssertion(challenge1.json, FACET)
+        response2 = token.getAssertion(challenge2.json, FACET)
+        response1 = token.getAssertion(challenge1.json, FACET)
 
-    assert u2f.verify_authenticate(device, challenge1, response1)
-    assert u2f.verify_authenticate(device, challenge2, response2)
+        assert u2f.verify_authenticate(device, challenge1, response1)
+        assert u2f.verify_authenticate(device, challenge2, response2)
 
-    try:
-        u2f.verify_authenticate(device, challenge1, response2)
-    except:
-        pass
-    else:
-        assert False, "Incorrect validation should fail!"
+        try:
+            u2f.verify_authenticate(device, challenge1, response2)
+        except:
+            pass
+        else:
+            assert False, "Incorrect validation should fail!"
 
-    try:
-        u2f.verify_authenticate(device, challenge2, response1)
-    except:
-        pass
-    else:
-        assert False, "Incorrect validation should fail!"
+        try:
+            u2f.verify_authenticate(device, challenge2, response1)
+        except:
+            pass
+        else:
+            assert False, "Incorrect validation should fail!"
 
+    def test_wrong_facet(self):
+        token = SoftU2FDevice()
+        request = u2f.start_register(APP_ID)
+        response = token.register(request.json, "http://wrongfacet.com")
 
-def test_wrong_facet():
-    token = SoftU2FDevice()
-    request = u2f.start_register(APP_ID)
-    response = token.register(request.json, "http://wrongfacet.com")
+        try:
+            u2f.complete_register(request, response, FACETS)
+        except:
+            pass
+        else:
+            assert False, "Incorrect facet should fail!"
 
-    try:
-        u2f.complete_register(request, response, FACETS)
-    except:
-        pass
-    else:
-        assert False, "Incorrect facet should fail!"
+        response2 = token.register(request.json, FACET)
+        device, cert = u2f.complete_register(request, response2)
 
-    response2 = token.register(request.json, FACET)
-    device, cert = u2f.complete_register(request, response2)
+        challenge = u2f.start_authenticate(device)
+        response = token.getAssertion(challenge.json, "http://notright.com")
 
-    challenge = u2f.start_authenticate(device)
-    response = token.getAssertion(challenge.json, "http://notright.com")
-
-    try:
-        u2f.verify_authenticate(device, challenge, response, FACETS)
-    except:
-        pass
-    else:
-        assert False, "Incorrect facet should fail!"
+        try:
+            u2f.verify_authenticate(device, challenge, response, FACETS)
+        except:
+            pass
+        else:
+            assert False, "Incorrect facet should fail!"

@@ -30,6 +30,7 @@ from u2flib_server.attestation.resolvers import create_resolver
 from u2flib_server.attestation.data import YUBICO
 from M2Crypto import X509
 import json
+import unittest
 
 ATTESTATION_CERT = """
 MIICGzCCAQWgAwIBAgIEdaP2dTALBgkqhkiG9w0BAQswLjEsMCoGA1UEAxMjWXViaWNvIFUyRiBS
@@ -45,44 +46,43 @@ DUzSk3HgOXbUd1FaSOPdlVFkG2N2JllFHykyO3zO
 """.replace('\n', '').decode('base64')
 
 
-def test_resolver():
-    resolver = create_resolver(YUBICO)
-    cert = X509.load_cert_der_string(ATTESTATION_CERT)
+class AttestationTest(unittest.TestCase):
 
-    metadata = resolver.resolve(cert)
-    assert metadata.identifier == '2fb54029-7613-4f1d-94f1-fb876c14a6fe'
+    def test_resolver(self):
+        resolver = create_resolver(YUBICO)
+        cert = X509.load_cert_der_string(ATTESTATION_CERT)
 
+        metadata = resolver.resolve(cert)
+        assert metadata.identifier == '2fb54029-7613-4f1d-94f1-fb876c14a6fe'
 
-def test_provider():
-    provider = MetadataProvider()
-    cert = X509.load_cert_der_string(ATTESTATION_CERT)
-    attestation = provider.get_attestation(cert)
+    def test_provider(self):
+        provider = MetadataProvider()
+        cert = X509.load_cert_der_string(ATTESTATION_CERT)
+        attestation = provider.get_attestation(cert)
 
-    assert attestation.trusted
+        assert attestation.trusted
 
+    def test_versioning_newer(self):
+        resolver = create_resolver(YUBICO)
+        newer = json.loads(json.dumps(YUBICO))
+        newer['version'] = newer['version'] + 1
+        newer['trustedCertificates'] = []
 
-def test_versioning_newer():
-    resolver = create_resolver(YUBICO)
-    newer = json.loads(json.dumps(YUBICO))
-    newer['version'] = newer['version'] + 1
-    newer['trustedCertificates'] = []
+        resolver.add_metadata(newer)
 
-    resolver.add_metadata(newer)
+        cert = X509.load_cert_der_string(ATTESTATION_CERT)
+        metadata = resolver.resolve(cert)
 
-    cert = X509.load_cert_der_string(ATTESTATION_CERT)
-    metadata = resolver.resolve(cert)
+        assert metadata is None
 
-    assert metadata is None
+    def test_versioning_older(self):
+        resolver = create_resolver(YUBICO)
+        newer = json.loads(json.dumps(YUBICO))
+        newer['trustedCertificates'] = []
 
+        resolver.add_metadata(newer)
 
-def test_versioning_older():
-    resolver = create_resolver(YUBICO)
-    newer = json.loads(json.dumps(YUBICO))
-    newer['trustedCertificates'] = []
+        cert = X509.load_cert_der_string(ATTESTATION_CERT)
+        metadata = resolver.resolve(cert)
 
-    resolver.add_metadata(newer)
-
-    cert = X509.load_cert_der_string(ATTESTATION_CERT)
-    metadata = resolver.resolve(cert)
-
-    assert metadata.identifier == '2fb54029-7613-4f1d-94f1-fb876c14a6fe'
+        assert metadata.identifier == '2fb54029-7613-4f1d-94f1-fb876c14a6fe'

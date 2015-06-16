@@ -25,36 +25,20 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from setuptools import setup
-from release import release
-import re
-
-VERSION_PATTERN = re.compile(r"(?m)^__version__\s*=\s*['\"](.+)['\"]$")
-
-
-def get_version():
-    """Return the current version as defined by u2flib_server/__init__.py."""
-
-    with open('u2flib_server/__init__.py', 'r') as f:
-        match = VERSION_PATTERN.search(f.read())
-        return match.group(1)
-
+from u2flib_server.yubicommon import setup
 
 setup(
     name='python-u2flib-server',
-    version=get_version(),
     author='Dain Nilsson',
     author_email='dain@yubico.com',
     description='Python based U2F server library',
     maintainer='Yubico Open Source Maintainers',
     maintainer_email='ossmaint@yubico.com',
     url='https://github.com/Yubico/python-u2flib-server',
-    packages=['u2flib_server', 'u2flib_server.attestation'],
     setup_requires=['nose>=1.0'],
     install_requires=['M2Crypto', 'pyasn1>=0.1.7', 'pyasn1-modules'],
-    test_suite='nose.collector',
-    tests_require=[''],
-    cmdclass={'release': release},
+    test_suite='test',
+    tests_require=[],
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
