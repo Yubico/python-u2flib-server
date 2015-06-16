@@ -1,22 +1,37 @@
-== u2flib-server ==
+== u2flib-server
 Provides functionality for working with the server side aspects of the U2F
 protocol as defined in the link:http://fidoalliance.org/specifications/download[FIDO specifications].
 
 To read more about U2F and how to use a U2F library, visit
 link:http://developers.yubico.com/U2F[developers.yubico.com/U2F].
 
-=== Dependencies ===
+=== Dependencies
 u2flib-server depends on M2Crypto. On a Ubuntu system, this can be installed with
 the following command: 
 
   $ apt-get install python-m2crypto
 
-=== Installation ===
+=== Installation
 u2flib-server is installable by running the following command:
 
-  $ python setup.py install
+  $ pip install python-u2flib-server
 
-=== Example ===
+==== Check out the code
+Run these commands to check out the source code:
+
+  git clone https://github.com/Yubico/python-u2flib-server.git
+  cd python-u2flib-server
+  git submodules init
+  git submodules update
+
+==== Build a source release
+To build a source release tar ball, run this command:
+
+  python setup.py sdist
+
+The resulting build will be created in the dist/ subdirectory.
+
+=== Example
 See examples/u2f_server.py for a working example of a HTTP server for
 U2F enrollment and authentication. u2f_server.py can be run as a stand-alone
 server, and can be used to test a U2F client implementation, such as
@@ -25,7 +40,7 @@ python-u2flib-host, using for example cURL.
 The examples below show cURL command to register a U2F device, and to
 authenticate it.
 
-==== Registration ====
+==== Registration
 Registration is initiated by sending a request to the server:
 
 ----
@@ -40,7 +55,7 @@ true
 ----
 The result, "true", indicates that registration was successful.
 
-==== Authentication ====
+==== Authentication
 Authentication for a previously registered U2F device is done by sending a
 request to the server:
 
