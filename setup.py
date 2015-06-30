@@ -25,7 +25,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.yubicommon import setup
+from u2flib_server.yubicommon.setup import setup
 
 setup(
     name='python-u2flib-server',
@@ -35,7 +35,6 @@ setup(
     maintainer='Yubico Open Source Maintainers',
     maintainer_email='ossmaint@yubico.com',
     url='https://github.com/Yubico/python-u2flib-server',
-    setup_requires=['nose>=1.0'],
     install_requires=['M2Crypto', 'pyasn1>=0.1.7', 'pyasn1-modules'],
     test_suite='test',
     tests_require=[],
