@@ -21,8 +21,8 @@ Run these commands to check out the source code:
 
   git clone https://github.com/Yubico/python-u2flib-server.git
   cd python-u2flib-server
-  git submodules init
-  git submodules update
+  git submodule init
+  git submodule update
 
 ==== Build a source release
 To build a source release tar ball, run this command:
