@@ -6,3 +6,13 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq -y swig
 script: python setup.py test
+
+install:
+  - pip install -r dev-requirements.txt
+  - pip install -e .
+
+script:
+  - coverage run setup.py test
+
+after_success:
+  - coveralls
