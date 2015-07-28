@@ -1,13 +1,24 @@
 language: python
+sudo: false
+
 python:
   - "2.6"
   - "2.7"
-before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq -y swig
-script: python setup.py test
+
+cache:
+  directories:
+    - $HOME/.cache/pip
+
+addons:
+  apt:
+    packages:
+      - libssl-dev
+      - python-dev
+      - python-pip # Standin for python-setuptools, a build-dep of M2Crypto
+      - swig
 
 install:
+  - pip install --disable-pip-version-check --upgrade pip
   - pip install -r dev-requirements.txt
   - pip install -e .
 
