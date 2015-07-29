@@ -38,6 +38,11 @@ setup(
     install_requires=['M2Crypto', 'pyasn1>=0.1.7', 'pyasn1-modules'],
     test_suite='test',
     tests_require=[],
+    extras_require={
+        'u2f_server': ['WebOb'],
+        'u2f_server:python_version=="2.6"': ['argparse'],
+        'yubiauth_server': ['yubiauth', 'WebOb'],
+    },
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
