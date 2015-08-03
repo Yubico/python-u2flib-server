@@ -1,9 +1,17 @@
 *.pyc
+*.egg
 *.egg-info
 build/
 dist/
+.eggs/
 .ropeproject/
 ChangeLog
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
 
 # Pycharm and IntelliJ
 .idea
