@@ -25,14 +25,19 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from M2Crypto import EC, BIO
 from u2flib_server.utils import (websafe_encode, websafe_decode,
                                  sha_256 as H, rand_bytes)
 from u2flib_server.jsapi import (RegisterRequest, RegisterResponse,
                                  SignRequest, SignResponse, ClientData)
 import struct
 
-CURVE = EC.NID_X9_62_prime256v1
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.hazmat.primitives import hashes
+
+CURVE = ec.SECP256R1
 
 CERT = """
 MIIBhzCCAS6gAwIBAgIJAJm+6LEMouwcMAkGByqGSM49BAEwITEfMB0GA1UEAwwW
@@ -89,23 +94,25 @@ class SoftU2FDevice(object):
         client_param = H(client_data)
 
         # ECC key generation
-        privu = EC.gen_params(CURVE)
-        privu.gen_key()
-        pub_key = str(privu.pub().get_der())[-65:]
+        priv_key = ec.generate_private_key(CURVE, default_backend())
+        pub_key = priv_key.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
+        pub_key = str(pub_key)[-65:]
 
         # Store
         key_handle = rand_bytes(64)
         app_param = request.appParam
-        self.keys[key_handle] = (privu, app_param)
+        self.keys[key_handle] = (priv_key, app_param)
 
         # Attestation signature
-        cert_priv = EC.load_key_bio(BIO.MemoryBuffer(CERT_PRIV))
+        cert_priv = load_pem_private_key(CERT_PRIV, password=None, backend=default_backend())
         cert = CERT
         digest = H(chr(0x00) + app_param + client_param + key_handle + pub_key)
-        signature = cert_priv.sign_dsa_asn1(digest)
+        signer = cert_priv.signer(ec.ECDSA(hashes.SHA256()))
+        signer.update(digest)
+        signature = signer.finalize()
 
-        raw_response = chr(0x05) + pub_key + chr(len(key_handle)) + \
-            key_handle + cert + signature
+        raw_response = (chr(0x05) + pub_key + chr(len(key_handle)) +
+                        key_handle + cert + signature)
 
         return RegisterResponse(
             registrationData=websafe_encode(raw_response),
@@ -143,7 +150,7 @@ class SoftU2FDevice(object):
         client_param = H(client_data)
 
         # Unwrap:
-        privu, app_param = self.keys[key_handle]
+        priv_key, app_param = self.keys[key_handle]
 
         # Increment counter
         self.counter += 1
@@ -153,7 +160,9 @@ class SoftU2FDevice(object):
         counter = struct.pack('>I', self.counter)
 
         digest = H(app_param + touch + counter + client_param)
-        signature = privu.sign_dsa_asn1(digest)
+        signer = priv_key.signer(ec.ECDSA(hashes.SHA256()))
+        signer.update(digest)
+        signature = signer.finalize()
         raw_response = touch + counter + signature
 
         return SignResponse(

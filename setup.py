@@ -35,7 +35,7 @@ setup(
     maintainer='Yubico Open Source Maintainers',
     maintainer_email='ossmaint@yubico.com',
     url='https://github.com/Yubico/python-u2flib-server',
-    install_requires=['M2Crypto', 'pyasn1>=0.1.7', 'pyasn1-modules'],
+    install_requires=['cryptography>=1.2', 'pyasn1>=0.1.7', 'pyasn1-modules'],
     test_suite='test',
     tests_require=[],
     extras_require={

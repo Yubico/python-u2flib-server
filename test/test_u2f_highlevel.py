@@ -75,5 +75,5 @@ class AttestationTest(unittest.TestCase):
         )
 
         assert u2f.verify_authenticate([device1, device2],
-                                    auth_request_data,
-                                    response)
+                                       auth_request_data,
+                                       response)
