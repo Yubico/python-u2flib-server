@@ -86,9 +86,9 @@ class MetadataResolver(object):
 
         try:
             verifier.verify()
-            return 1
+            return True
         except InvalidSignature:
-            return 0
+            return False
 
     def resolve(self, cert):
         issuer = cert.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
