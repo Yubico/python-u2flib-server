@@ -29,7 +29,7 @@ from cryptography import x509
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ec, rsa, padding
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 from cryptography.x509.oid import NameOID
 
@@ -79,3 +79,30 @@ def verify_ecdsa_signature(payload, pubkey, signature):
     verifier.update(payload)
 
     verifier.verify()
+
+
+def verify_cert_signature(cert, pubkey):
+    cert_signature = cert.signature
+    cert_bytes = cert.tbs_certificate_bytes
+
+    if isinstance(pubkey, rsa.RSAPublicKey):
+        verifier = pubkey.verifier(
+            cert_signature,
+            padding.PKCS1v15(),
+            cert.signature_hash_algorithm
+        )
+    elif isinstance(pubkey, ec.EllipticCurvePublicKey):
+        verifier = pubkey.verifier(
+            cert_signature,
+            ec.ECDSA(cert.signature_hash_algorithm)
+        )
+    else:
+        raise ValueError("Unsupported public key value")
+
+    verifier.update(cert_bytes)
+
+    try:
+        verifier.verify()
+        return True
+    except InvalidSignature:
+        return False

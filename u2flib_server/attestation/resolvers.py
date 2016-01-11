@@ -29,13 +29,13 @@ __all__ = ['MetadataResolver', 'create_resolver']
 
 from u2flib_server.jsapi import MetadataObject
 from u2flib_server.attestation.data import YUBICO
+from u2flib_server.utils import verify_cert_signature
 import os
 import json
 
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.x509.oid import NameOID
 
 
@@ -74,18 +74,8 @@ class MetadataResolver(object):
             self._metadata[cert] = metadata
 
     def _verify_cert(self, cert, key):
-        cert_signature = cert.signature
-        cert_bytes = cert.tbs_certificate_bytes
-
-        verifier = key.verifier(
-            cert_signature,
-            padding.PKCS1v15(),
-            cert.signature_hash_algorithm
-        )
-        verifier.update(cert_bytes)
-
         try:
-            verifier.verify()
+            verify_cert_signature(cert, key)
             return True
         except InvalidSignature:
             return False
