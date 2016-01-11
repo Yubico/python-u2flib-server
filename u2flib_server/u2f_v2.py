@@ -33,7 +33,6 @@ from u2flib_server.utils import (certificate_from_der, pub_key_from_der, sha_256
 import struct
 
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.exceptions import InvalidSignature
 
 
 __all__ = [
@@ -96,10 +95,7 @@ class RawRegistrationResponse(object):
         digest = sha_256(data)
         pub_key = self.certificate.public_key()
 
-        try:
-            verify_ecdsa_signature(digest, pub_key, self.signature)
-        except InvalidSignature:
-            raise Exception('Attestation signature verification failed!')
+        verify_ecdsa_signature(digest, pub_key, self.signature)
 
     def _fixsig(self, cert):
         subject = 'CN=' + subject_from_certificate(cert)
@@ -144,13 +140,9 @@ class RawAuthenticationResponse(object):
         data = (self.app_param + self.user_presence + self.counter +
                 self.chal_param)
         digest = sha_256(data)
-
         pub_key = pub_key_from_der(pubkey)
 
-        try:
-            verify_ecdsa_signature(digest, pub_key, self.signature)
-        except InvalidSignature:
-            raise Exception('Challenge signature verification failed!')
+        verify_ecdsa_signature(digest, pub_key, self.signature)
 
     def serialize(self):
         return websafe_encode(self.app_param + self.chal_param + self.data)

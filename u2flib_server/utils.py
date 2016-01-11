@@ -78,7 +78,4 @@ def verify_ecdsa_signature(payload, pubkey, signature):
     verifier = pubkey.verifier(signature, ec.ECDSA(hashes.SHA256()))
     verifier.update(payload)
 
-    try:
-        verifier.verify()
-    except InvalidSignature:
-        raise Exception('Attestation signature verification failed!')
+    verifier.verify()
