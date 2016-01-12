@@ -27,11 +27,16 @@
 
 __all__ = ['MetadataResolver', 'create_resolver']
 
-from M2Crypto import X509
 from u2flib_server.jsapi import MetadataObject
 from u2flib_server.attestation.data import YUBICO
+from u2flib_server.utils import verify_cert_signature
 import os
 import json
+
+from cryptography import x509
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.backends import default_backend
+from cryptography.x509.oid import NameOID
 
 
 class MetadataResolver(object):
@@ -61,17 +66,25 @@ class MetadataResolver(object):
 
     def _index(self, metadata):
         for cert_pem in metadata.trustedCertificates:
-            cert_der = ''.join(cert_pem.splitlines()[1:-1]).decode('base64')
-            cert = X509.load_cert_der_string(cert_der)
-            subject = cert.get_subject().as_text()
+            cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
+            subject = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
             if subject not in self._certs:
                 self._certs[subject] = []
             self._certs[subject].append(cert)
             self._metadata[cert] = metadata
 
+    def _verify_cert(self, cert, key):
+        try:
+            verify_cert_signature(cert, key)
+            return True
+        except InvalidSignature:
+            return False
+
     def resolve(self, cert):
-        for issuer in self._certs.get(cert.get_issuer().as_text(), []):
-            if cert.verify(issuer.get_pubkey()) == 1:
+        issuer = cert.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+
+        for issuer in self._certs.get(issuer, []):
+            if self._verify_cert(cert, issuer.public_key()):
                 return self._metadata[issuer]
         return None
 

@@ -32,6 +32,8 @@ __all__ = [
     'DEFAULT_MATCHERS'
 ]
 
+from cryptography.hazmat.primitives.serialization import Encoding
+
 
 class DeviceMatcher(object):
     selector_type = None
@@ -53,7 +55,7 @@ class FingerprintMatcher(DeviceMatcher):
 def get_ext_by_oid(cert, oid):
     from pyasn1.codec.der import decoder
     from pyasn1_modules import rfc2459
-    cert, _ = decoder.decode(cert.as_der(), asn1Spec=rfc2459.Certificate())
+    cert, _ = decoder.decode(cert.public_bytes(Encoding.DER), asn1Spec=rfc2459.Certificate())
     for ext in cert['tbsCertificate']['extensions']:
         if ext['extnID'].prettyPrint() == oid:
             return decoder.decode(ext['extnValue'])[0].asOctets()

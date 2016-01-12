@@ -25,12 +25,15 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from M2Crypto import X509
 from u2flib_server.jsapi import (RegisterRequest, RegisterResponse,
                                  SignRequest, SignResponse, DeviceRegistration)
-from u2flib_server.utils import (pub_key_from_der, sha_256, websafe_decode,
-                                 websafe_encode, rand_bytes)
+from u2flib_server.utils import (certificate_from_der, pub_key_from_der, sha_256, subject_from_certificate,
+                                 websafe_decode, websafe_encode, rand_bytes,
+                                 verify_ecdsa_signature)
 import struct
+
+from cryptography.hazmat.primitives.serialization import Encoding
+
 
 __all__ = [
     'start_register',
@@ -71,6 +74,7 @@ class RawRegistrationResponse(object):
 
         data = data[1:]
         self.pub_key = data[:self.PUBKEY_LEN]
+
         data = data[self.PUBKEY_LEN:]
 
         kh_len = ord(data[0])
@@ -79,28 +83,27 @@ class RawRegistrationResponse(object):
         self.key_handle = data[:kh_len]
         data = data[kh_len:]
 
-        self.certificate = self._fixsig(X509.load_cert_der_string(data))
-        self.signature = data[len(self.certificate.as_der()):]
+        self.certificate = self._fixsig(certificate_from_der(data))
+        self.signature = data[len(self.certificate.public_bytes(Encoding.DER)):]
 
     def __str__(self):
         return self.data.encode('hex')
 
     def verify_csr_signature(self):
-        data = chr(0x00) + self.app_param + self.chal_param + \
-            self.key_handle + self.pub_key
-        pubkey = self.certificate.get_pubkey()
-        pubkey.reset_context('sha256')
-        pubkey.verify_init()
-        pubkey.verify_update(data)
-        if not pubkey.verify_final(self.signature) == 1:
-            raise Exception('Attestation signature verification failed!')
+        data = (chr(0x00) + self.app_param + self.chal_param +
+                self.key_handle + self.pub_key)
+        digest = sha_256(data)
+        pub_key = self.certificate.public_key()
+
+        verify_ecdsa_signature(digest, pub_key, self.signature)
 
     def _fixsig(self, cert):
-        subject = cert.get_subject().as_text()
+        subject = 'CN=' + subject_from_certificate(cert)
+
         if subject in FIXSIG:  # Set unused bits in signature to 0
-            der = list(cert.as_der())
+            der = list(cert.public_bytes(Encoding.DER))
             der[-257] = chr(0)
-            cert = X509.load_cert_der_string(''.join(der))
+            cert = certificate_from_der(der)
         return cert
 
     def serialize(self):
@@ -134,12 +137,12 @@ class RawAuthenticationResponse(object):
         return self.data.encode('hex')
 
     def verify_signature(self, pubkey):
-        data = self.app_param + self.user_presence + self.counter + \
-            self.chal_param
+        data = (self.app_param + self.user_presence + self.counter +
+                self.chal_param)
         digest = sha_256(data)
         pub_key = pub_key_from_der(pubkey)
-        if not pub_key.verify_dsa_asn1(digest, self.signature) == 1:
-            raise Exception('Challenge signature verification failed!')
+
+        verify_ecdsa_signature(digest, pub_key, self.signature)
 
     def serialize(self):
         return websafe_encode(self.app_param + self.chal_param + self.data)
