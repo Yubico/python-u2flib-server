@@ -6,10 +6,15 @@ To read more about U2F and how to use a U2F library, visit
 link:http://developers.yubico.com/U2F[developers.yubico.com/U2F].
 
 === Dependencies
-u2flib-server depends on M2Crypto. On a Ubuntu system, this can be installed with
+u2flib-server depends on link:https://pypi.python.org/pypi/cryptography[cryptography],
+which requires libffi, OpenSSL, and a C compiler to build.
+On a Debian or Ubuntu system, the build dependencies can be installed with
 the following command: 
 
-  $ apt-get install python-m2crypto
+  $ sudo apt-get install build-essential libssl-dev libffi-dev python-dev
+
+For Windows the cryptography project provides prebuilt wheels.
+For other platforms refer to link:https://cryptography.io/en/stable/installation/[cryptography installation].
 
 === Installation
 u2flib-server is installable by running the following command:
