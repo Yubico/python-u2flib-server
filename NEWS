@@ -1,3 +1,9 @@
+* Version 4.0.0 (not yet released)
+ ** Major release: Changed backend from M2Crypto to cryptography
+ ** Added dependency on cryptography 1.2 or higher
+ ** Removed dependency on M2Crypto
+ ** utils.rand_bytes() now sources bytes from os.urandom()
+
 * Version 3.2.0 (released 2015-06-16)
  ** License change release: Changed license to BSD 2-clause.
 
