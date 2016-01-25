@@ -26,7 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from u2flib_server import u2f_v2 as u2f
-from soft_u2f_v2 import SoftU2FDevice
+from .soft_u2f_v2 import SoftU2FDevice
 import unittest
 
 APP_ID = 'http://www.example.com/appid'
