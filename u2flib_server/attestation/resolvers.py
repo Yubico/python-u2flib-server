@@ -101,9 +101,9 @@ def _load_from_file(fname):
 
 
 def _load_from_dir(dname):
-    return map(_load_from_file,
-               [os.path.join(dname, d) for d in os.listdir(dname)
-                if d.endswith('.json')])
+    json_fnames = [os.path.join(dname, d) for d in os.listdir(dname)
+                   if d.endswith('.json')]
+    return [_load_from_file(fname) for fname in json_fnames]
 
 
 def _add_data(resolver, data):

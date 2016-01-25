@@ -132,11 +132,11 @@ class RegisterRequestData(JSONDict):
 
     @property
     def authenticateRequests(self):
-        return map(SignRequest, self['authenticateRequests'])
+        return [SignRequest(req) for req in self['authenticateRequests']]
 
     @property
     def registerRequests(self):
-        return map(RegisterRequest, self['registerRequests'])
+        return [RegisterRequest(req) for req in self['registerRequests']]
 
     def getRegisterRequest(self, response):
         return self.registerRequests[0]
@@ -146,7 +146,7 @@ class AuthenticateRequestData(JSONDict):
 
     @property
     def authenticateRequests(self):
-        return map(SignRequest, self['authenticateRequests'])
+        return [SignRequest(req) for req in self['authenticateRequests']]
 
     def getAuthenticateRequest(self, response):
         return next(req for req in self.authenticateRequests
@@ -173,7 +173,7 @@ class DeviceInfo(JSONDict):
         selectors = self.get('selectors')
         if selectors is None:
             return None
-        return map(Selector, selectors)
+        return [Selector(selector) for selector in selectors]
 
 
 class MetadataObject(JSONDict):
@@ -184,4 +184,4 @@ class MetadataObject(JSONDict):
 
     @property
     def devices(self):
-        return map(DeviceInfo, self['devices'])
+        return [DeviceInfo(dev) for dev in self['devices']]

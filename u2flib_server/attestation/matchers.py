@@ -46,7 +46,7 @@ class FingerprintMatcher(DeviceMatcher):
     selector_type = 'fingerprint'
 
     def matches(self, certificate, parameters=[]):
-        fingerprints = map(lambda s: s.lower(), parameters)
+        fingerprints = [s.lower() for s in parameters]
         return certificate.get_fingerprint('sha1').lower() in fingerprints
 
 
