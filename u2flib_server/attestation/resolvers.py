@@ -74,6 +74,12 @@ class MetadataResolver(object):
             self._metadata[cert] = metadata
 
     def _verify_cert(self, cert, key):
+        """Returns True if cert contains a correct signature made using the
+        provided key
+
+        NB: This *only* checks the signature. No other checks are performed.
+        E.g. the trust chain, expiry are all ignored.
+        """
         try:
             verify_cert_signature(cert, key)
             return True

@@ -12,6 +12,7 @@ cache:
 addons:
   apt:
     packages:
+      - libffi-dev
       - libssl-dev
       - python-dev
       - python-pip # Standin for python-setuptools, a build-dep of M2Crypto
