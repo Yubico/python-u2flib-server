@@ -92,10 +92,9 @@ class RawRegistrationResponse(object):
     def verify_csr_signature(self):
         data = (chr(0x00) + self.app_param + self.chal_param +
                 self.key_handle + self.pub_key)
-        digest = sha_256(data)
         pub_key = self.certificate.public_key()
 
-        verify_ecdsa_signature(digest, pub_key, self.signature)
+        verify_ecdsa_signature(data, pub_key, self.signature)
 
     def _fixsig(self, cert):
         subject = 'CN=' + subject_from_certificate(cert)

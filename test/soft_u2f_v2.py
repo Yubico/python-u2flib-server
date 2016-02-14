@@ -107,9 +107,9 @@ class SoftU2FDevice(object):
         # Attestation signature
         cert_priv = load_pem_private_key(CERT_PRIV, password=None, backend=default_backend())
         cert = CERT
-        digest = H(chr(0x00) + app_param + client_param + key_handle + pub_key)
+        data = chr(0x00) + app_param + client_param + key_handle + pub_key
         signer = cert_priv.signer(ec.ECDSA(hashes.SHA256()))
-        signer.update(digest)
+        signer.update(data)
         signature = signer.finalize()
 
         raw_response = (chr(0x05) + pub_key + chr(len(key_handle)) +
