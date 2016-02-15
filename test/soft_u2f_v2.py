@@ -25,8 +25,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.utils import (websafe_encode, websafe_decode,
-                                 sha_256 as H, rand_bytes)
+from u2flib_server.utils import (websafe_encode, websafe_decode, sha_256,
+                                 rand_bytes)
 from u2flib_server.jsapi import (RegisterRequest, RegisterResponse,
                                  SignRequest, SignResponse, ClientData)
 import struct
@@ -92,7 +92,7 @@ class SoftU2FDevice(object):
             origin=facet
         )
         client_data = client_data.json
-        client_param = H(client_data)
+        client_param = sha_256(client_data)
 
         # ECC key generation
         priv_key = ec.generate_private_key(CURVE, default_backend())
@@ -148,7 +148,7 @@ class SoftU2FDevice(object):
             origin=facet
         )
         client_data = client_data.json
-        client_param = H(client_data)
+        client_param = sha_256(client_data)
 
         # Unwrap:
         priv_key, app_param = self.keys[key_handle]
@@ -160,9 +160,9 @@ class SoftU2FDevice(object):
         touch = chr(1 if touch else 0)
         counter = struct.pack('>I', self.counter)
 
-        digest = H(app_param + touch + counter + client_param)
+        data = app_param + touch + counter + client_param
         signer = priv_key.signer(ec.ECDSA(hashes.SHA256()))
-        signer.update(digest)
+        signer.update(data)
         signature = signer.finalize()
         raw_response = touch + counter + signature
 
