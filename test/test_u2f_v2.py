@@ -37,10 +37,16 @@ FACETS = [FACET]
 class U2fV2Test(unittest.TestCase):
 
     def test_register_fixed_values(self):
-        token = SoftU2FDevice()
         request = {"challenge": "KEzvDDdHwnXtPHIMb0Uh43hgOJ-wQTsdLujGkeg6JxM", "version": "U2F_V2", "appId": "http://localhost:8081"}
         response = {"registrationData": "BQS94xQL46G4vheJPkYSuEteM6Km4-MwgBAu1zZ6MAbjDDgqhYbpHuIhhGOKjedeDd58qqktqOJsby9wMdHGnUtVQD8ISPywVi3J6SaKebCVQdHPu3_zQigRS8LhoDwKT5Ed3tg8AWuNw9XBZEh4doEDxKGuInFazirUw8acOu2qDcEwggIjMIIBDaADAgECAgRyuHt0MAsGCSqGSIb3DQEBCzAPMQ0wCwYDVQQDEwR0ZXN0MB4XDTE1MDkwNDA3MTAyNloXDTE2MDkwMzA3MTAyNlowKjEoMCYGA1UEAxMfWXViaWNvIFUyRiBFRSBTZXJpYWwgMTkyNDY5Mjg1MjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABC37i_h-xmEtGfWnuvj_BmuhtU18MKShNP_vZ7C2WJwj8OHaSLnzAfha14CMUPaKPtRFfP6w9CFGhvEizH33XZKjOzA5MCIGCSsGAQQBgsQKAgQVMS4zLjYuMS40LjEuNDE0ODIuMS4yMBMGCysGAQQBguUcAgEBBAQDAgQwMAsGCSqGSIb3DQEBCwOCAQEAab7fWlJ-lOR1sqIxawPU5DWZ1b9nQ0QmNNoetPHJ_fJC95r0esRq5axfmGufbNktNWanHww7i9n5WWxSaMTWuJSF0eAXUajo8odYA8nB4_0I6z615MWa9hTU64Pl9HlqkR5ez5jndmJNuAfhaIF4h062Jw051kMo_aENxuLixnybTfJG7Q5KRE00o2MFs5b9L9fzhDtBzv5Z-vGOefuiohowpwnxIA9l0tGqrum9plUdx06K9TqKMRDQ8naosy01rbouA6i5xVjl-tHT3z-r__FYcSZ_dQ5-SCPOh4F0w6T0UwzymQmeqYN3pP-UUgnJ-ihD-uhEWklKNYRy0K0G0jBGAiEA7rbbx2jwC1YGICkZMR07ggKWaHCwFBxNDW3OwhLNNzUCIQCSq0sjGSUnWMQgPEImrmd3tMKcbrjI995rti6UYozqsg", "clientData": "eyJvcmlnaW4iOiAiaHR0cDovL2xvY2FsaG9zdDo4MDgxIiwgImNoYWxsZW5nZSI6ICJLRXp2RERkSHduWHRQSElNYjBVaDQzaGdPSi13UVRzZEx1akdrZWc2SnhNIiwgInR5cCI6ICJuYXZpZ2F0b3IuaWQuZmluaXNoRW5yb2xsbWVudCJ9"}
         u2f.complete_register(request, response)
+
+    def test_authenticate_fixed_values(self):
+        device = {'publicKey': 'BBCcnAOknoMgokEGuTdfpNLQ-uylwlKp_xbEW8urjJsXKv9XZSL-V8C2nwcPEckav1mKZFr5K96uAoLtuxOUf-E', 'keyHandle': 'BIarIKfyMqyf4bEI6tOqGInAfHrrQkMA2eyPJlNnInbAG1tXNpdRs48ef92_b1-mfN4VhaTWxo1SGoxT6CIanw', 'appId': 'http://www.example.com/appid'}
+        challenge = {'challenge': 'oIeu-nPxx9DcF7L_DCE3kvYox-c4UuvFb8lNG6th10o', 'version': 'U2F_V2', 'keyHandle': 'BIarIKfyMqyf4bEI6tOqGInAfHrrQkMA2eyPJlNnInbAG1tXNpdRs48ef92_b1-mfN4VhaTWxo1SGoxT6CIanw', 'appId': 'http://www.example.com/appid'}
+        response = {'keyHandle': 'BIarIKfyMqyf4bEI6tOqGInAfHrrQkMA2eyPJlNnInbAG1tXNpdRs48ef92_b1-mfN4VhaTWxo1SGoxT6CIanw', 'signatureData': 'AAAAAAEwRQIhAJrcBSpaDprFzXmVw60r6x-_gOZ0t-8v7DGiiKmar0SAAiAYKKEX41nWUCLLoKiBYuHYdPP1MPPNQ0cX_JIybPtThA', 'clientData': 'eyJvcmlnaW4iOiAiaHR0cHM6Ly93d3cuZXhhbXBsZS5jb20iLCAiY2hhbGxlbmdlIjogIm9JZXUtblB4eDlEY0Y3TF9EQ0Uza3ZZb3gtYzRVdXZGYjhsTkc2dGgxMG8iLCAidHlwIjogIm5hdmlnYXRvci5pZC5nZXRBc3NlcnRpb24ifQ'}
+
+        assert u2f.verify_authenticate(device, challenge, response)
 
     def test_register_soft_u2f(self):
         token = SoftU2FDevice()
