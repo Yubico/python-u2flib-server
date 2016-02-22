@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from u2flib_server.utils import websafe_decode, sha_256
+from u2flib_server.yubicommon.compat import string_types, binary_type
 import json
 
 __all__ = [
@@ -50,12 +51,14 @@ class JSONDict(dict):
         else:
             raise TypeError("Wrong number of arguments given!")
 
-        if isinstance(data, basestring):
+        if isinstance(data, string_types):
             self.update(json.loads(data))
+        elif isinstance(data, binary_type):
+            self.update(json.loads(data.decode('utf-8')))
         elif isinstance(data, dict):
             self.update(data)
         else:
-            raise TypeError("Unexpected type! Expected one of dict or string")
+            raise TypeError("Unexpected type! Expected one of string, bytes, or dict")
 
     def __getattr__(self, key):
         try:

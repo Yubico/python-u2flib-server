@@ -30,6 +30,7 @@ from u2flib_server.jsapi import (RegisterRequest, RegisterResponse,
 from u2flib_server.utils import (certificate_from_der, pub_key_from_der, sha_256, subject_from_certificate,
                                  websafe_decode, websafe_encode, rand_bytes,
                                  verify_ecdsa_signature)
+from u2flib_server.yubicommon.compat import byte2int
 import struct
 
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -69,7 +70,7 @@ class RawRegistrationResponse(object):
         self.chal_param = chal_param
         self.data = data
 
-        if ord(data[0]) != 0x05:
+        if byte2int(data[0]) != 0x05:
             raise ValueError("Invalid data: %s" % data.encode('hex'))
 
         data = data[1:]
@@ -77,7 +78,7 @@ class RawRegistrationResponse(object):
 
         data = data[self.PUBKEY_LEN:]
 
-        kh_len = ord(data[0])
+        kh_len = byte2int(data[0])
         data = data[1:]
 
         self.key_handle = data[:kh_len]
@@ -90,7 +91,7 @@ class RawRegistrationResponse(object):
         return self.data.encode('hex')
 
     def verify_csr_signature(self):
-        data = (chr(0x00) + self.app_param + self.chal_param +
+        data = (b'\x00' + self.app_param + self.chal_param +
                 self.key_handle + self.pub_key)
         digest = sha_256(data)
         pub_key = self.certificate.public_key()
@@ -102,7 +103,7 @@ class RawRegistrationResponse(object):
 
         if subject in FIXSIG:  # Set unused bits in signature to 0
             der = list(cert.public_bytes(Encoding.DER))
-            der[-257] = chr(0)
+            der[-257] = b'\x00'
             cert = certificate_from_der(der)
         return cert
 
@@ -128,7 +129,7 @@ class RawAuthenticationResponse(object):
         self.chal_param = chal_param
         self.data = data
 
-        self.user_presence = data[0]
+        self.user_presence = data[0:1]
         self.counter = data[1:5]
         self.counter_int = struct.unpack('>I', self.counter)[0]
         self.signature = data[5:]

@@ -25,10 +25,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.utils import (websafe_encode, websafe_decode,
-                                 sha_256 as H, rand_bytes)
+from u2flib_server.utils import (websafe_encode, websafe_decode, sha_256,
+                                 rand_bytes)
 from u2flib_server.jsapi import (RegisterRequest, RegisterResponse,
                                  SignRequest, SignResponse, ClientData)
+from u2flib_server.yubicommon.compat import int2byte
+from base64 import b64decode
 import struct
 
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -39,7 +41,7 @@ from cryptography.hazmat.primitives import hashes
 
 CURVE = ec.SECP256R1
 
-CERT = """
+CERT = b64decode(b"""
 MIIBhzCCAS6gAwIBAgIJAJm+6LEMouwcMAkGByqGSM49BAEwITEfMB0GA1UEAwwW
 WXViaWNvIFUyRiBTb2Z0IERldmljZTAeFw0xMzA3MTcxNDIxMDNaFw0xNjA3MTYx
 NDIxMDNaMCExHzAdBgNVBAMMFll1YmljbyBVMkYgU29mdCBEZXZpY2UwWTATBgcq
@@ -49,9 +51,9 @@ FgQUDai/k1dOImjupkubYxhOkoX3sZ4wHwYDVR0jBBgwFoAUDai/k1dOImjupkub
 YxhOkoX3sZ4wDAYDVR0TBAUwAwEB/zAJBgcqhkjOPQQBA0gAMEUCIFyVmXW7zlnY
 VWhuyCbZ+OKNtSpovBB7A5OHAH52dK9/AiEA+mT4tz5eJV8W2OwVxcq6ZIjrwqXc
 jXSy2G0k27yAUDk=
-""".decode('base64')
+""")
 
-CERT_PRIV = """
+CERT_PRIV = b"""
 -----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIMyk3gKcDg5lsYdl48fZoIFORhAc9cQxmn2Whv/+ya+2oAoGCCqGSM49
 AwEHoUQDQgAEO+GX3XN+mD2fsN4J51xDyAZdSd6aJeiL4kQDHP4QiGRWww8DLOG0
@@ -91,13 +93,13 @@ class SoftU2FDevice(object):
             challenge=request['challenge'],
             origin=facet
         )
-        client_data = client_data.json
-        client_param = H(client_data)
+        client_data = client_data.json.encode('utf-8')
+        client_param = sha_256(client_data)
 
         # ECC key generation
         priv_key = ec.generate_private_key(CURVE, default_backend())
         pub_key = priv_key.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
-        pub_key = str(pub_key)[-65:]
+        pub_key = pub_key[-65:]
 
         # Store
         key_handle = rand_bytes(64)
@@ -107,12 +109,12 @@ class SoftU2FDevice(object):
         # Attestation signature
         cert_priv = load_pem_private_key(CERT_PRIV, password=None, backend=default_backend())
         cert = CERT
-        digest = H(chr(0x00) + app_param + client_param + key_handle + pub_key)
+        digest = sha_256(b'\x00' + app_param + client_param + key_handle + pub_key)
         signer = cert_priv.signer(ec.ECDSA(hashes.SHA256()))
         signer.update(digest)
         signature = signer.finalize()
 
-        raw_response = (chr(0x05) + pub_key + chr(len(key_handle)) +
+        raw_response = (b'\x05' + pub_key + int2byte(len(key_handle)) +
                         key_handle + cert + signature)
 
         return RegisterResponse(
@@ -147,8 +149,8 @@ class SoftU2FDevice(object):
             challenge=request['challenge'],
             origin=facet
         )
-        client_data = client_data.json
-        client_param = H(client_data)
+        client_data = client_data.json.encode('utf-8')
+        client_param = sha_256(client_data)
 
         # Unwrap:
         priv_key, app_param = self.keys[key_handle]
@@ -157,10 +159,10 @@ class SoftU2FDevice(object):
         self.counter += 1
 
         # Create signature
-        touch = chr(1 if touch else 0)
+        touch = int2byte(1 if touch else 0)
         counter = struct.pack('>I', self.counter)
 
-        digest = H(app_param + touch + counter + client_param)
+        digest = sha_256(app_param + touch + counter + client_param)
         signer = priv_key.signer(ec.ECDSA(hashes.SHA256()))
         signer.update(digest)
         signature = signer.finalize()

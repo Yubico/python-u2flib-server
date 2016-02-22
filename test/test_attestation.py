@@ -30,10 +30,11 @@ from u2flib_server.attestation.resolvers import create_resolver
 from u2flib_server.attestation.data import YUBICO
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from base64 import b64decode
 import json
 import unittest
 
-ATTESTATION_CERT = """
+ATTESTATION_CERT = b64decode(b"""
 MIICGzCCAQWgAwIBAgIEdaP2dTALBgkqhkiG9w0BAQswLjEsMCoGA1UEAxMjWXViaWNvIFUyRiBS
 b290IENBIFNlcmlhbCA0NTcyMDA2MzEwIBcNMTQwODAxMDAwMDAwWhgPMjA1MDA5MDQwMDAwMDBa
 MCoxKDAmBgNVBAMMH1l1YmljbyBVMkYgRUUgU2VyaWFsIDE5NzM2Nzk3MzMwWTATBgcqhkjOPQIB
@@ -44,7 +45,7 @@ kQJGXeNAF4DPANGGlz8JU+LNEVE2PWPGgEM0GXgB7mZN5Sinfy1AoOdO+3c3bfdJQuXlUxHbo+nD
 pxxKpzq9gr++RbokF1+0JBkMbaA/qLYL4WdhY5NvaOyMvYpO3sBxlzn6FcP67hlotGH1wU7qhCeh
 +uur7zDeAWVh7c4QtJOXHkLJQfV3Z7ZMvhkIA6jZJAX99hisABU/SSa5DtgX7AfsHwa04h69AAAW
 DUzSk3HgOXbUd1FaSOPdlVFkG2N2JllFHykyO3zO
-""".replace('\n', '').decode('base64')
+""")
 
 
 class AttestationTest(unittest.TestCase):

@@ -5,7 +5,7 @@ from cryptography.hazmat.backends import default_backend
 
 from u2flib_server.attestation.matchers import get_ext_by_oid
 
-YUBICO_ATTESTATION_CERT_SERIAL_544338083 = '''-----BEGIN CERTIFICATE-----
+YUBICO_ATTESTATION_CERT_SERIAL_544338083 = b'''-----BEGIN CERTIFICATE-----
 MIICIjCCAQygAwIBAgIEIHHwozALBgkqhkiG9w0BAQswDzENMAsGA1UEAxMEdGVz
 dDAeFw0xNTA4MTEwOTAwMzNaFw0xNjA4MTAwOTAwMzNaMCkxJzAlBgNVBAMTHll1
 YmljbyBVMkYgRUUgU2VyaWFsIDU0NDMzODA4MzBZMBMGByqGSM49AgEGCCqGSM49
