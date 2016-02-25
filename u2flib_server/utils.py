@@ -25,7 +25,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.yubicommon.compat import string_types, binary_type
+from u2flib_server.yubicommon.compat import text_type
 
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
@@ -56,14 +56,14 @@ def pub_key_from_der(der):
 
 
 def websafe_decode(data):
-    if isinstance(data, string_types):
+    if isinstance(data, text_type):
         data = data.encode('ascii')
     data += b'=' * (-len(data) % 4)
     return urlsafe_b64decode(data)
 
 
 def websafe_encode(data):
-    if isinstance(data, string_types) and not isinstance(data, binary_type):
+    if isinstance(data, text_type):
         data = data.encode('ascii')
     return urlsafe_b64encode(data).replace(b'=', b'').decode('ascii')
 

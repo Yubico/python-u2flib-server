@@ -30,7 +30,7 @@ __all__ = ['MetadataResolver', 'create_resolver']
 from u2flib_server.jsapi import MetadataObject
 from u2flib_server.attestation.data import YUBICO
 from u2flib_server.utils import verify_cert_signature
-from u2flib_server.yubicommon.compat import string_types
+from u2flib_server.yubicommon.compat import string_types, text_type
 import os
 import json
 
@@ -67,7 +67,7 @@ class MetadataResolver(object):
 
     def _index(self, metadata):
         for cert_pem in metadata.trustedCertificates:
-            if isinstance(cert_pem, string_types):
+            if isinstance(cert_pem, text_type):
                 cert_pem = cert_pem.encode('ascii')
             cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
             subject = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
