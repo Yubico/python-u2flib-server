@@ -31,6 +31,7 @@ from u2flib_server.utils import (certificate_from_der, pub_key_from_der, sha_256
                                  websafe_decode, websafe_encode, rand_bytes,
                                  verify_ecdsa_signature)
 from u2flib_server.yubicommon.compat import byte2int
+import codecs
 import struct
 
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -71,7 +72,7 @@ class RawRegistrationResponse(object):
         self.data = data
 
         if byte2int(data[0]) != 0x05:
-            raise ValueError("Invalid data: %s" % data.encode('hex'))
+            raise ValueError("Invalid data: %r" % (data,))
 
         data = data[1:]
         self.pub_key = data[:self.PUBKEY_LEN]
@@ -88,7 +89,10 @@ class RawRegistrationResponse(object):
         self.signature = data[len(self.certificate.public_bytes(Encoding.DER)):]
 
     def __str__(self):
-        return self.data.encode('hex')
+        # N.B. Ensure this returns a str() on both Python 2 and Python 3
+        hex_bytes = codecs.encode(self.data, 'hex_codec')
+        hex_text = codecs.decode(hex_bytes, 'ascii')
+        return str(hex_text)
 
     def verify_csr_signature(self):
         data = (b'\x00' + self.app_param + self.chal_param +
@@ -135,7 +139,10 @@ class RawAuthenticationResponse(object):
         self.signature = data[5:]
 
     def __str__(self):
-        return self.data.encode('hex')
+        # N.B. Ensure this returns a str() on both Python 2 and Python 3
+        hex_bytes = codecs.encode(self.data, 'hex_codec')
+        hex_text = codecs.decode(hex_bytes, 'ascii')
+        return str(hex_text)
 
     def verify_signature(self, pubkey):
         data = (self.app_param + self.user_presence + self.counter +
@@ -166,16 +173,15 @@ def _validate_client_data(client_data, challenge, typ, valid_facets):
 
     """
     if client_data.typ != typ:
-        raise ValueError("Wrong type! Was: %s, expecting: %s" % (
+        raise ValueError("Wrong type! Was: %r, expecting: %r" % (
             client_data.typ, typ))
 
     if challenge != client_data.challenge:
-        raise ValueError("Wrong challenge! Was: %s, expecting: %s" % (
-            client_data.challenge.encode('hex'),
-            challenge.encode('hex')))
+        raise ValueError("Wrong challenge! Was: %r, expecting: %r" % (
+            client_data.challenge, challenge))
 
     if valid_facets is not None and client_data.origin not in valid_facets:
-        raise ValueError("Invalid facet! Was: %s, expecting one of: %r" % (
+        raise ValueError("Invalid facet! Was: %r, expecting one of: %r" % (
             client_data.origin, valid_facets))
 
 
