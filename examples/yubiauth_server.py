@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright (c) 2013 Yubico AB
 # All rights reserved.
 #

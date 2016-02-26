@@ -109,9 +109,9 @@ class SoftU2FDevice(object):
         # Attestation signature
         cert_priv = load_pem_private_key(CERT_PRIV, password=None, backend=default_backend())
         cert = CERT
-        digest = sha_256(b'\x00' + app_param + client_param + key_handle + pub_key)
+        data = b'\x00' + app_param + client_param + key_handle + pub_key
         signer = cert_priv.signer(ec.ECDSA(hashes.SHA256()))
-        signer.update(digest)
+        signer.update(data)
         signature = signer.finalize()
 
         raw_response = (b'\x05' + pub_key + int2byte(len(key_handle)) +
@@ -162,9 +162,9 @@ class SoftU2FDevice(object):
         touch = int2byte(1 if touch else 0)
         counter = struct.pack('>I', self.counter)
 
-        digest = sha_256(app_param + touch + counter + client_param)
+        data = app_param + touch + counter + client_param
         signer = priv_key.signer(ec.ECDSA(hashes.SHA256()))
-        signer.update(digest)
+        signer.update(data)
         signature = signer.finalize()
         raw_response = touch + counter + signature
 

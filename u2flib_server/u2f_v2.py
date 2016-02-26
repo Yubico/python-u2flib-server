@@ -27,8 +27,9 @@
 
 from u2flib_server.jsapi import (RegisterRequest, RegisterResponse,
                                  SignRequest, SignResponse, DeviceRegistration)
-from u2flib_server.utils import (certificate_from_der, pub_key_from_der, sha_256, subject_from_certificate,
-                                 websafe_decode, websafe_encode, rand_bytes,
+from u2flib_server.utils import (certificate_from_der, pub_key_from_der,
+                                 subject_from_certificate, websafe_decode,
+                                 websafe_encode, rand_bytes,
                                  verify_ecdsa_signature)
 from u2flib_server.yubicommon.compat import byte2int
 import codecs
@@ -97,10 +98,9 @@ class RawRegistrationResponse(object):
     def verify_csr_signature(self):
         data = (b'\x00' + self.app_param + self.chal_param +
                 self.key_handle + self.pub_key)
-        digest = sha_256(data)
         pub_key = self.certificate.public_key()
 
-        verify_ecdsa_signature(digest, pub_key, self.signature)
+        verify_ecdsa_signature(data, pub_key, self.signature)
 
     def _fixsig(self, cert):
         subject = 'CN=' + subject_from_certificate(cert)
@@ -147,10 +147,9 @@ class RawAuthenticationResponse(object):
     def verify_signature(self, pubkey):
         data = (self.app_param + self.user_presence + self.counter +
                 self.chal_param)
-        digest = sha_256(data)
         pub_key = pub_key_from_der(pubkey)
 
-        verify_ecdsa_signature(digest, pub_key, self.signature)
+        verify_ecdsa_signature(data, pub_key, self.signature)
 
     def serialize(self):
         return websafe_encode(self.app_param + self.chal_param + self.data)
