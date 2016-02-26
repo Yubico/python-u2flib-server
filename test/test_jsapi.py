@@ -80,27 +80,27 @@ class JSONDictTest(unittest.TestCase):
 class DeviceRegistrationTest(unittest.TestCase):
     def test_appParam(self):
         obj = DeviceRegistration(appId='https://example.com')
-        self.assertEqual('\x10\x06\x80\xadTl\xe6\xa5w\xf4/R\xdf3\xb4\xcf'
-                         '\xdc\xa7V\x85\x9efK\x8d}\xe3)\xb1P\xd0\x9c\xe9',
+        self.assertEqual(b'\x10\x06\x80\xadTl\xe6\xa5w\xf4/R\xdf3\xb4\xcf'
+                         b'\xdc\xa7V\x85\x9efK\x8d}\xe3)\xb1P\xd0\x9c\xe9',
                          obj.appParam)
 
 
 class ClientDataTest(unittest.TestCase):
     def test_challenge(self):
         obj = ClientData(challenge='Zm9vYmFy')
-        self.assertEqual('foobar', obj.challenge)
+        self.assertEqual(b'foobar', obj.challenge)
 
 
 class RegisterRequestTest(unittest.TestCase):
     def test_appParam(self):
         req = RegisterRequest(appId='https://example.com')
-        self.assertEqual('\x10\x06\x80\xadTl\xe6\xa5w\xf4/R\xdf3\xb4\xcf'
-                         '\xdc\xa7V\x85\x9efK\x8d}\xe3)\xb1P\xd0\x9c\xe9',
+        self.assertEqual(b'\x10\x06\x80\xadTl\xe6\xa5w\xf4/R\xdf3\xb4\xcf'
+                         b'\xdc\xa7V\x85\x9efK\x8d}\xe3)\xb1P\xd0\x9c\xe9',
                          req.appParam)
 
     def test_challenge(self):
         req = RegisterRequest(challenge='Zm9vYmFy')
-        self.assertEqual('foobar', req.challenge)
+        self.assertEqual(b'foobar', req.challenge)
 
 class RegisterResponseTest(unittest.TestCase):
     def test_clientData(self):
@@ -110,8 +110,8 @@ class RegisterResponseTest(unittest.TestCase):
 
     def test_clientParam(self):
         obj = RegisterResponse(clientData='eyJhIjoxfQ')
-        self.assertEqual("\x01Z\xbd\x7f\\\xc5z-\xd9Ku\x90\xf0J\xd8\x08"
-                         "Bs\x90^\xe3>\xc5\xce\xbe\xaeb'j\x97\xf8b",
+        self.assertEqual(b"\x01Z\xbd\x7f\\\xc5z-\xd9Ku\x90\xf0J\xd8\x08"
+                         b"Bs\x90^\xe3>\xc5\xce\xbe\xaeb'j\x97\xf8b",
                          obj.clientParam)
 
     def test_registrationData(self):
@@ -121,13 +121,13 @@ class RegisterResponseTest(unittest.TestCase):
 class SignRequestTest(unittest.TestCase):
     def test_appParam(self):
         req = SignRequest(appId='https://example.com')
-        self.assertEqual('\x10\x06\x80\xadTl\xe6\xa5w\xf4/R\xdf3\xb4\xcf'
-                         '\xdc\xa7V\x85\x9efK\x8d}\xe3)\xb1P\xd0\x9c\xe9',
+        self.assertEqual(b'\x10\x06\x80\xadTl\xe6\xa5w\xf4/R\xdf3\xb4\xcf'
+                         b'\xdc\xa7V\x85\x9efK\x8d}\xe3)\xb1P\xd0\x9c\xe9',
                          req.appParam)
 
     def test_challenge(self):
         req = SignRequest(challenge='Zm9vYmFy')
-        self.assertEqual('foobar', req.challenge)
+        self.assertEqual(b'foobar', req.challenge)
 
 
 class SignResponseTest(unittest.TestCase):
@@ -138,13 +138,13 @@ class SignResponseTest(unittest.TestCase):
 
     def test_clientParam(self):
         obj = SignResponse(clientData='eyJhIjoxfQ')
-        self.assertEqual("\x01Z\xbd\x7f\\\xc5z-\xd9Ku\x90\xf0J\xd8\x08"
-                         "Bs\x90^\xe3>\xc5\xce\xbe\xaeb'j\x97\xf8b",
+        self.assertEqual(b"\x01Z\xbd\x7f\\\xc5z-\xd9Ku\x90\xf0J\xd8\x08"
+                         b"Bs\x90^\xe3>\xc5\xce\xbe\xaeb'j\x97\xf8b",
                          obj.clientParam)
 
     def test_signatureData(self):
         response = SignResponse(signatureData='eyJhIjoxfQ')
-        self.assertEqual('{"a":1}', response.signatureData)
+        self.assertEqual(b'{"a":1}', response.signatureData)
 
 
 class RegisterRequestDataTest(unittest.TestCase):

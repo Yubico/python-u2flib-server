@@ -31,6 +31,8 @@ from u2flib_server.utils import (certificate_from_der, pub_key_from_der,
                                  subject_from_certificate, websafe_decode,
                                  websafe_encode, rand_bytes,
                                  verify_ecdsa_signature)
+from u2flib_server.yubicommon.compat import byte2int
+import codecs
 import struct
 
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -70,15 +72,15 @@ class RawRegistrationResponse(object):
         self.chal_param = chal_param
         self.data = data
 
-        if ord(data[0]) != 0x05:
-            raise ValueError("Invalid data: %s" % data.encode('hex'))
+        if byte2int(data[0]) != 0x05:
+            raise ValueError("Invalid data: %r" % (data,))
 
         data = data[1:]
         self.pub_key = data[:self.PUBKEY_LEN]
 
         data = data[self.PUBKEY_LEN:]
 
-        kh_len = ord(data[0])
+        kh_len = byte2int(data[0])
         data = data[1:]
 
         self.key_handle = data[:kh_len]
@@ -88,10 +90,13 @@ class RawRegistrationResponse(object):
         self.signature = data[len(self.certificate.public_bytes(Encoding.DER)):]
 
     def __str__(self):
-        return self.data.encode('hex')
+        # N.B. Ensure this returns a str() on both Python 2 and Python 3
+        hex_bytes = codecs.encode(self.data, 'hex_codec')
+        hex_text = codecs.decode(hex_bytes, 'ascii')
+        return str(hex_text)
 
     def verify_csr_signature(self):
-        data = (chr(0x00) + self.app_param + self.chal_param +
+        data = (b'\x00' + self.app_param + self.chal_param +
                 self.key_handle + self.pub_key)
         pub_key = self.certificate.public_key()
 
@@ -102,7 +107,7 @@ class RawRegistrationResponse(object):
 
         if subject in FIXSIG:  # Set unused bits in signature to 0
             der = list(cert.public_bytes(Encoding.DER))
-            der[-257] = chr(0)
+            der[-257] = b'\x00'
             cert = certificate_from_der(der)
         return cert
 
@@ -128,13 +133,16 @@ class RawAuthenticationResponse(object):
         self.chal_param = chal_param
         self.data = data
 
-        self.user_presence = data[0]
+        self.user_presence = data[0:1]
         self.counter = data[1:5]
         self.counter_int = struct.unpack('>I', self.counter)[0]
         self.signature = data[5:]
 
     def __str__(self):
-        return self.data.encode('hex')
+        # N.B. Ensure this returns a str() on both Python 2 and Python 3
+        hex_bytes = codecs.encode(self.data, 'hex_codec')
+        hex_text = codecs.decode(hex_bytes, 'ascii')
+        return str(hex_text)
 
     def verify_signature(self, pubkey):
         data = (self.app_param + self.user_presence + self.counter +
@@ -164,16 +172,15 @@ def _validate_client_data(client_data, challenge, typ, valid_facets):
 
     """
     if client_data.typ != typ:
-        raise ValueError("Wrong type! Was: %s, expecting: %s" % (
+        raise ValueError("Wrong type! Was: %r, expecting: %r" % (
             client_data.typ, typ))
 
     if challenge != client_data.challenge:
-        raise ValueError("Wrong challenge! Was: %s, expecting: %s" % (
-            client_data.challenge.encode('hex'),
-            challenge.encode('hex')))
+        raise ValueError("Wrong challenge! Was: %r, expecting: %r" % (
+            client_data.challenge, challenge))
 
     if valid_facets is not None and client_data.origin not in valid_facets:
-        raise ValueError("Invalid facet! Was: %s, expecting one of: %r" % (
+        raise ValueError("Invalid facet! Was: %r, expecting one of: %r" % (
             client_data.origin, valid_facets))
 
 

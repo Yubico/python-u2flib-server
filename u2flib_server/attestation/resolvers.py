@@ -30,6 +30,7 @@ __all__ = ['MetadataResolver', 'create_resolver']
 from u2flib_server.jsapi import MetadataObject
 from u2flib_server.attestation.data import YUBICO
 from u2flib_server.utils import verify_cert_signature
+from u2flib_server.yubicommon.compat import string_types, text_type
 import os
 import json
 
@@ -66,6 +67,8 @@ class MetadataResolver(object):
 
     def _index(self, metadata):
         for cert_pem in metadata.trustedCertificates:
+            if isinstance(cert_pem, text_type):
+                cert_pem = cert_pem.encode('ascii')
             cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
             subject = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
             if subject not in self._certs:
@@ -101,9 +104,9 @@ def _load_from_file(fname):
 
 
 def _load_from_dir(dname):
-    return map(_load_from_file,
-               [os.path.join(dname, d) for d in os.listdir(dname)
-                if d.endswith('.json')])
+    json_fnames = [os.path.join(dname, d) for d in os.listdir(dname)
+                   if d.endswith('.json')]
+    return [_load_from_file(fname) for fname in json_fnames]
 
 
 def _add_data(resolver, data):
@@ -111,7 +114,7 @@ def _add_data(resolver, data):
         for d in data:
             _add_data(resolver, d)
         return
-    elif isinstance(data, basestring):
+    elif isinstance(data, string_types):
         if os.path.isdir(data):
             data = _load_from_dir(data)
         elif os.path.isfile(data):

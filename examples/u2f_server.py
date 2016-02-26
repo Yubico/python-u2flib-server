@@ -116,7 +116,8 @@ class U2FServer(object):
             self.users[username] = {}
 
         user = self.users[username]
-        devices = map(DeviceRegistration.wrap, user.get('_u2f_devices_', []))
+        devices = [DeviceRegistration.wrap(device)
+                   for device in user.get('_u2f_devices_', [])]
         enroll = start_register(self.app_id, devices)
         user['_u2f_enroll_'] = enroll.json
         return enroll.json
@@ -125,7 +126,8 @@ class U2FServer(object):
         user = self.users[username]
         binding, cert = complete_register(user.pop('_u2f_enroll_'), data,
                                           [self.facet])
-        devices = map(DeviceRegistration.wrap, user.get('_u2f_devices_', []))
+        devices = [DeviceRegistration.wrap(device)
+                   for device in user.get('_u2f_devices_', [])]
         devices.append(binding)
         user['_u2f_devices_'] = [d.json for d in devices]
 
@@ -136,14 +138,16 @@ class U2FServer(object):
 
     def sign(self, username):
         user = self.users[username]
-        devices = map(DeviceRegistration.wrap, user.get('_u2f_devices_', []))
+        devices = [DeviceRegistration.wrap(device)
+                   for device in user.get('_u2f_devices_', [])]
         challenge = start_authenticate(devices)
         user['_u2f_challenge_'] = challenge.json
         return challenge.json
 
     def verify(self, username, data):
         user = self.users[username]
-        devices = map(DeviceRegistration.wrap, user.get('_u2f_devices_', []))
+        devices = [DeviceRegistration.wrap(device)
+                   for device in user.get('_u2f_devices_', [])]
 
         challenge = user.pop('_u2f_challenge_')
         c, t = verify_authenticate(devices, challenge, data, [self.facet])

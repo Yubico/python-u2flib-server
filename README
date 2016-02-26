@@ -1,6 +1,7 @@
 == u2flib-server
 Provides functionality for working with the server side aspects of the U2F
 protocol as defined in the link:http://fidoalliance.org/specifications/download[FIDO specifications].
+It supports Python 2.6-2.7, Python 3.3+ and PyPy 2.6+.
 
 To read more about U2F and how to use a U2F library, visit
 link:http://developers.yubico.com/U2F[developers.yubico.com/U2F].

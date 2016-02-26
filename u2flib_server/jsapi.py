@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from u2flib_server.utils import websafe_decode, sha_256
+from u2flib_server.yubicommon.compat import binary_type, text_type
 import json
 
 __all__ = [
@@ -50,12 +51,14 @@ class JSONDict(dict):
         else:
             raise TypeError("Wrong number of arguments given!")
 
-        if isinstance(data, basestring):
+        if isinstance(data, text_type):
             self.update(json.loads(data))
+        elif isinstance(data, binary_type):
+            self.update(json.loads(data.decode('utf-8')))
         elif isinstance(data, dict):
             self.update(data)
         else:
-            raise TypeError("Unexpected type! Expected one of dict or string")
+            raise TypeError("Unexpected type! Expected one of string, bytes, or dict")
 
     def __getattr__(self, key):
         try:
@@ -132,11 +135,11 @@ class RegisterRequestData(JSONDict):
 
     @property
     def authenticateRequests(self):
-        return map(SignRequest, self['authenticateRequests'])
+        return [SignRequest(req) for req in self['authenticateRequests']]
 
     @property
     def registerRequests(self):
-        return map(RegisterRequest, self['registerRequests'])
+        return [RegisterRequest(req) for req in self['registerRequests']]
 
     def getRegisterRequest(self, response):
         return self.registerRequests[0]
@@ -146,7 +149,7 @@ class AuthenticateRequestData(JSONDict):
 
     @property
     def authenticateRequests(self):
-        return map(SignRequest, self['authenticateRequests'])
+        return [SignRequest(req) for req in self['authenticateRequests']]
 
     def getAuthenticateRequest(self, response):
         return next(req for req in self.authenticateRequests
@@ -173,7 +176,7 @@ class DeviceInfo(JSONDict):
         selectors = self.get('selectors')
         if selectors is None:
             return None
-        return map(Selector, selectors)
+        return [Selector(selector) for selector in selectors]
 
 
 class MetadataObject(JSONDict):
@@ -184,4 +187,4 @@ class MetadataObject(JSONDict):
 
     @property
     def devices(self):
-        return map(DeviceInfo, self['devices'])
+        return [DeviceInfo(dev) for dev in self['devices']]
