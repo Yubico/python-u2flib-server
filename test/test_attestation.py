@@ -25,7 +25,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.attestation.metadata import MetadataProvider
+from u2flib_server.attestation.metadata import MetadataProvider, Transport
 from u2flib_server.attestation.resolvers import create_resolver
 from u2flib_server.attestation.data import YUBICO
 from cryptography import x509
@@ -48,17 +48,38 @@ DUzSk3HgOXbUd1FaSOPdlVFkG2N2JllFHykyO3zO
 """)
 
 
+ATTESTATION_CERT_WITH_TRANSPORT = b64decode(b"""
+MIICIjCCAQygAwIBAgIEIHHwozALBgkqhkiG9w0BAQswDzENMAsGA1UEAxMEdGVz
+dDAeFw0xNTA4MTEwOTAwMzNaFw0xNjA4MTAwOTAwMzNaMCkxJzAlBgNVBAMTHll1
+YmljbyBVMkYgRUUgU2VyaWFsIDU0NDMzODA4MzBZMBMGByqGSM49AgEGCCqGSM49
+AwEHA0IABPdFG1pBjBBQVhLrD39Qg1vKjuR2kRdBZnwLI/zgzztQpf4ffpkrkB/3
+E0TXj5zg8gN9sgMkX48geBe+tBEpvMmjOzA5MCIGCSsGAQQBgsQKAgQVMS4zLjYu
+MS40LjEuNDE0ODIuMS4yMBMGCysGAQQBguUcAgEBBAQDAgQwMAsGCSqGSIb3DQEB
+CwOCAQEAb3YpnmHHduNuWEXlLqlnww9034ZeZaojhPAYSLR8d5NPk9gc0hkjQKmI
+aaBM7DsaHbcHMKpXoMGTQSC++NCZTcKvZ0Lt12mp5HRnM1NNBPol8Hte5fLmvW4t
+Q9EzLl4gkz7LSlORxTuwTbae1eQqNdxdeB+0ilMFCEUc+3NGCNM0RWd+sP5+gzMX
+BDQAI1Sc9XaPIg8t3du5JChAl1ifpu/uERZ2WQgtxeBDO6z1Xoa5qz4svf5oURjP
+ZjxS0WUKht48Z2rIjk5lZzERSaY3RrX3UtrnZEIzCmInXOrcRPeAD4ZutpiwuHe6
+2ABsjuMRnKbATbOUiLdknNyPYYQz2g==
+""")
+
+
+YUBICO_RESOLVER = create_resolver(YUBICO)
+EMPTY_RESOLVER = create_resolver([])
+
+
 class AttestationTest(unittest.TestCase):
 
     def test_resolver(self):
-        resolver = create_resolver(YUBICO)
-        cert = x509.load_der_x509_certificate(ATTESTATION_CERT, default_backend())
-        metadata = resolver.resolve(cert)
+        cert = x509.load_der_x509_certificate(ATTESTATION_CERT,
+                                              default_backend())
+        metadata = YUBICO_RESOLVER.resolve(cert)
         assert metadata.identifier == '2fb54029-7613-4f1d-94f1-fb876c14a6fe'
 
     def test_provider(self):
-        provider = MetadataProvider()
-        cert = x509.load_der_x509_certificate(ATTESTATION_CERT, default_backend())
+        provider = MetadataProvider(YUBICO_RESOLVER)
+        cert = x509.load_der_x509_certificate(ATTESTATION_CERT,
+                                              default_backend())
         attestation = provider.get_attestation(cert)
 
         assert attestation.trusted
@@ -71,7 +92,8 @@ class AttestationTest(unittest.TestCase):
 
         resolver.add_metadata(newer)
 
-        cert = x509.load_der_x509_certificate(ATTESTATION_CERT, default_backend())
+        cert = x509.load_der_x509_certificate(ATTESTATION_CERT,
+                                              default_backend())
         metadata = resolver.resolve(cert)
 
         assert metadata is None
@@ -83,7 +105,23 @@ class AttestationTest(unittest.TestCase):
 
         resolver.add_metadata(newer)
 
-        cert = x509.load_der_x509_certificate(ATTESTATION_CERT, default_backend())
+        cert = x509.load_der_x509_certificate(ATTESTATION_CERT,
+                                              default_backend())
         metadata = resolver.resolve(cert)
 
         assert metadata.identifier == '2fb54029-7613-4f1d-94f1-fb876c14a6fe'
+
+    def test_transports_from_cert(self):
+        provider = MetadataProvider(EMPTY_RESOLVER)
+        cert = x509.load_der_x509_certificate(ATTESTATION_CERT_WITH_TRANSPORT,
+                                              default_backend())
+        attestation = provider.get_attestation(cert)
+
+        assert attestation.transports == Transport.USB | Transport.NFC
+
+    def test_transports_from_metadata(self):
+        provider = MetadataProvider(YUBICO_RESOLVER)
+        cert = x509.load_der_x509_certificate(ATTESTATION_CERT,
+                                              default_backend())
+        attestation = provider.get_attestation(cert)
+        assert attestation.transports == Transport.USB
