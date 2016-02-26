@@ -7,7 +7,7 @@ python:
   - "3.3"
   - "3.4"
   - "3.5"
-  - "pypy"
+#  - "pypy" We require PyPy >= 2.6, which is currently not supported by TravisCI
 
 cache:
   directories:
