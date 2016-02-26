@@ -25,14 +25,17 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from cryptography.x509 import (
+    ExtensionNotFound, ObjectIdentifier
+)
+
+
 __all__ = [
     'DeviceMatcher',
     'FingerprintMatcher',
     'ExtensionMatcher',
     'DEFAULT_MATCHERS'
 ]
-
-from cryptography.hazmat.primitives.serialization import Encoding
 
 
 class DeviceMatcher(object):
@@ -50,16 +53,14 @@ class FingerprintMatcher(DeviceMatcher):
         return certificate.get_fingerprint('sha1').lower() in fingerprints
 
 
-# This is needed since older versions of M2Crypto don't have a way of getting
-# extensions by their OID.
 def get_ext_by_oid(cert, oid):
-    from pyasn1.codec.der import decoder
-    from pyasn1_modules import rfc2459
-    cert, _ = decoder.decode(cert.public_bytes(Encoding.DER), asn1Spec=rfc2459.Certificate())
-    for ext in cert['tbsCertificate']['extensions']:
-        if ext['extnID'].prettyPrint() == oid:
-            return decoder.decode(ext['extnValue'])[0].asOctets()
-    return None
+    oid = ObjectIdentifier(oid)
+    try:
+        extension = cert.extensions.get_extension_for_oid(oid)
+    except ExtensionNotFound:
+        return None
+
+    return extension.value.value
 
 
 class ExtensionMatcher(DeviceMatcher):

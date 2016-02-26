@@ -30,7 +30,7 @@ from u2flib_server.yubicommon.setup import setup
 import sys
 
 
-install_requires = ['cryptography>=1.2', 'pyasn1>=0.1.7', 'pyasn1-modules']
+install_requires = ['cryptography>=1.2']
 if sys.version_info < (3, 4):
     install_requires.append('enum34')
 
