@@ -1,6 +1,6 @@
 YUBICO = {
     "identifier": "2fb54029-7613-4f1d-94f1-fb876c14a6fe",
-    "version": 3,
+    "version": 4,
     "vendorInfo": {
         "url": "https://yubico.com",
         "imageUrl": "https://developers.yubico.com/U2F/Images/yubico.png",
@@ -13,6 +13,7 @@ YUBICO = {
         {
             "deviceId": "1.3.6.1.4.1.41482.1.1",
             "displayName": "Security Key by Yubico",
+            "transports": 4,
             "deviceUrl": "https://www.yubico.com/products/yubikey-hardware/fido-u2f-security-key/",
             "imageUrl": "https://developers.yubico.com/U2F/Images/SKY.png",
             "selectors": [
@@ -34,6 +35,7 @@ YUBICO = {
         {
             "deviceId": "1.3.6.1.4.1.41482.1.2",
             "displayName": "YubiKey NEO/NEO-n",
+            "transports": 4,
             "deviceUrl": "https://www.yubico.com/products/yubikey-hardware/yubikey-neo/",
             "imageUrl": "https://developers.yubico.com/U2F/Images/NEO.png",
             "selectors": [
@@ -76,6 +78,7 @@ YUBICO = {
         {
             "deviceId": "1.3.6.1.4.1.41482.1.4",
             "displayName": "YubiKey Edge",
+            "transports": 4,
             "deviceUrl": "https://www.yubico.com/products/yubikey-hardware/",
             "imageUrl": "https://developers.yubico.com/U2F/Images/YKE.png",
             "selectors": [
@@ -91,6 +94,7 @@ YUBICO = {
         {
             "deviceId": "1.3.6.1.4.1.41482.1.5",
             "displayName": "YubiKey 4/YubiKey 4 Nano",
+            "transports": 4,
             "deviceUrl": "https://www.yubico.com/products/yubikey-hardware/yubikey4/",
             "imageUrl": "https://developers.yubico.com/U2F/Images/YK4.png",
             "selectors": [

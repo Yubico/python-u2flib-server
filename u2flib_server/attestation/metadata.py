@@ -27,15 +27,32 @@
 
 from u2flib_server.attestation.matchers import DEFAULT_MATCHERS
 from u2flib_server.attestation.resolvers import create_resolver
+from u2flib_server.jsapi import DeviceInfo
+from u2flib_server.yubicommon.compat import byte2int
 
-__all__ = ['Attestation', 'MetadataProvider']
+from cryptography.x509 import ObjectIdentifier, ExtensionNotFound
+from enum import IntEnum
+
+__all__ = ['Attestation', 'MetadataProvider', 'Transport']
+
+
+TRANSPORTS_EXT_OID = ObjectIdentifier('1.3.6.1.4.1.45724.2.1.1')
+
+
+class Transport(IntEnum):
+    BT_CLASSIC = 0x01  # Bluetooth Classic
+    BLE = 0x02  # Bluetooth Low Energy
+    USB = 0x04
+    NFC = 0x08
 
 
 class Attestation(object):
-    def __init__(self, trusted, vendor_info=None, device_info=None):
+    def __init__(self, trusted, vendor_info=None, device_info=None,
+                 cert_transports=0):
         self._trusted = trusted
         self._vendor_info = vendor_info
         self._device_info = device_info
+        self._transports = cert_transports | device_info.transports
 
     @property
     def trusted(self):
@@ -49,8 +66,38 @@ class Attestation(object):
     def device_info(self):
         return self._device_info
 
+    @property
+    def transports(self):
+        return self._transports
 
-UNKNOWN_ATTESTATION = Attestation(False)
+
+def get_transports(cert):
+    """Parses transport extension from attestation cert.
+    As the information is stored as a bitstring, which is a bit unwieldy to work
+    with, we convert it into an integer where each bit represents a transport
+    flag (as defined in the Transport IntEnum).
+    """
+    try:
+        ext = cert.extensions.get_extension_for_oid(TRANSPORTS_EXT_OID)
+        der_bitstring = ext.value.value
+        int_bytes = [byte2int(b) for b in der_bitstring[3:]]
+
+        # Mask away unused bits (should already be 0, but make sure)
+        unused_bits = byte2int(der_bitstring[2])
+        unused_bit_mask = 0xff
+        for _ in range(unused_bits):
+            unused_bit_mask <<= 1
+        int_bytes[-1] &= unused_bit_mask
+
+        # Reverse the bitstring and convert to integer
+        transports = 0
+        for byte in int_bytes:
+            for _ in range(8):
+                transports = (transports << 1) | (byte & 1)
+                byte >>= 1
+        return transports
+    except ExtensionNotFound:
+        return 0
 
 
 class MetadataProvider(object):
@@ -69,11 +116,16 @@ class MetadataProvider(object):
 
     def get_attestation(self, cert):
         metadata = self._resolver.resolve(cert)
-        if metadata is None:
-            return UNKNOWN_ATTESTATION
-        vendor_info = metadata.vendorInfo
-        device_info = self._lookup_device(metadata, cert)
-        return Attestation(True, vendor_info, device_info)
+        if metadata is not None:
+            trusted = True
+            vendor_info = metadata.vendorInfo
+            device_info = self._lookup_device(metadata, cert)
+        else:
+            trusted = False
+            vendor_info = None
+            device_info = DeviceInfo()
+        cert_transports = get_transports(cert)
+        return Attestation(trusted, vendor_info, device_info, cert_transports)
 
     def _lookup_device(self, metadata, cert):
         for device in metadata.devices:
@@ -84,4 +136,4 @@ class MetadataProvider(object):
                 matcher = self._matchers.get(selector.type)
                 if matcher and matcher.matches(cert, selector.parameters):
                     return device
-        return None
+        return DeviceInfo()

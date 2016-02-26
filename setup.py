@@ -27,6 +27,14 @@
 
 from u2flib_server.yubicommon.setup import setup
 
+import sys
+
+
+install_requires = ['cryptography>=1.2', 'pyasn1>=0.1.7', 'pyasn1-modules']
+if sys.version_info < (3, 4):
+    install_requires.append('enum34')
+
+
 setup(
     name='python-u2flib-server',
     author='Dain Nilsson',
@@ -35,7 +43,7 @@ setup(
     maintainer='Yubico Open Source Maintainers',
     maintainer_email='ossmaint@yubico.com',
     url='https://github.com/Yubico/python-u2flib-server',
-    install_requires=['cryptography>=1.2', 'pyasn1>=0.1.7', 'pyasn1-modules'],
+    install_requires=install_requires,
     test_suite='test',
     tests_require=[],
     extras_require={

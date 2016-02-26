@@ -178,6 +178,10 @@ class DeviceInfo(JSONDict):
             return None
         return [Selector(selector) for selector in selectors]
 
+    @property
+    def transports(self):
+        return self.get('transports', 0)
+
 
 class MetadataObject(JSONDict):
 
