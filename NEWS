@@ -1,4 +1,4 @@
-* Version 4.0.0 (not yet released)
+* Version 4.0.0 (released 2016-03-01)
  ** Major release: Changed backend from M2Crypto to cryptography
  ** Added support for Python 3.3+ and PyPy 2.6+
  ** Added support for reading transport information from attestation
