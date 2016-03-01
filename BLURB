@@ -1,6 +1,6 @@
 Author: Yubico
 Basename: python-u2flib-server
-Homepage: http://opensource.yubico.com/python-u2flib-server/
+Homepage: https://dev.yubico.com/python-u2flib-server/
 License: BSD-2-Clause
 Name: Python U2Flib Server
 Project: python-u2flib-server
