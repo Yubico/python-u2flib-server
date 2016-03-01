@@ -1,10 +1,11 @@
 * Version 4.0.0 (not yet released)
  ** Major release: Changed backend from M2Crypto to cryptography
  ** Added support for Python 3.3+ and PyPy 2.6+
+ ** Added support for reading transport information from attestation
+    certificates, as well as metadata statements.
  ** Added dependency on cryptography 1.2 or higher
- ** Removed dependency on M2Crypto
- ** Fixed double hashing in attestation signatures and authentication
-    challenges
+ ** Added dependency on enum34 on python versions < 3.4
+ ** Removed dependency on M2Crypto, pyasn1, and pyasn1-modules
  ** utils.rand_bytes() now sources bytes from os.urandom()
  ** utils.websafe_encode(), u2f_v2.RawRegistrationResponse.serialize(),
     and u2f_v2.RawAuthenticationResponse.serialize() now all return
