@@ -1,4 +1,6 @@
 * Version 4.0.1 (unreleased)
+ ** Bugfix: Certificates sometimes failed to parse on Python 3.
+ ** Bugfix: Example server wasn't properly updated for cryptography.
 
 * Version 4.0.0 (released 2016-03-01)
  ** Major release: Changed backend from M2Crypto to cryptography
