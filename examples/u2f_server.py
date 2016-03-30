@@ -44,6 +44,7 @@ This example requires webob to be installed.
 from u2flib_server.jsapi import DeviceRegistration
 from u2flib_server.u2f import (start_register, complete_register,
                                start_authenticate, verify_authenticate)
+from cryptography.hazmat.primitives.serialization import Encoding
 from webob.dec import wsgify
 from webob import exc
 import logging as log
@@ -132,7 +133,7 @@ class U2FServer(object):
         user['_u2f_devices_'] = [d.json for d in devices]
 
         log.info("U2F device enrolled. Username: %s", username)
-        log.debug("Attestation certificate:\n%s", cert.as_text())
+        log.debug("Attestation certificate:\n%s", cert.public_bytes(Encoding.PEM))
 
         return json.dumps(True)
 
