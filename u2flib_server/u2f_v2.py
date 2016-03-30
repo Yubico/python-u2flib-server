@@ -106,8 +106,8 @@ class RawRegistrationResponse(object):
         subject = 'CN=' + subject_from_certificate(cert)
 
         if subject in FIXSIG:  # Set unused bits in signature to 0
-            der = list(cert.public_bytes(Encoding.DER))
-            der[-257] = b'\x00'
+            der = cert.public_bytes(Encoding.DER)
+            der = der[:-257] + b'\x00' + der[-256:]
             cert = certificate_from_der(der)
         return cert
 
