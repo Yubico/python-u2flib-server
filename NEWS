@@ -1,4 +1,4 @@
-* Version 4.0.1 (unreleased)
+* Version 4.0.1 (released 2016-04-05)
  ** Bugfix: Certificates sometimes failed to parse on Python 3.
  ** Bugfix: Example server wasn't properly updated for cryptography.
 
