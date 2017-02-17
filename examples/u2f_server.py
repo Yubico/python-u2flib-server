@@ -41,9 +41,7 @@ Note that this is intended for test/demo purposes, not production use!
 This example requires webob to be installed.
 """
 
-from u2flib_server.jsapi import DeviceRegistration
-from u2flib_server.u2f import (start_register, complete_register,
-                               start_authenticate, verify_authenticate)
+from u2flib_server.data import (U2fRegisterRequest, U2fSignRequest)
 from cryptography.hazmat.primitives.serialization import Encoding
 from webob.dec import wsgify
 from webob import exc
@@ -117,41 +115,35 @@ class U2FServer(object):
             self.users[username] = {}
 
         user = self.users[username]
-        devices = [DeviceRegistration.wrap(device)
-                   for device in user.get('_u2f_devices_', [])]
-        enroll = start_register(self.app_id, devices)
+        enroll = U2fRegisterRequest.create(self.app_id,
+                                           user.get('_u2f_devices_', []))
         user['_u2f_enroll_'] = enroll.json
-        return enroll.json
+        return json.dumps(enroll.data_for_client)
 
     def bind(self, username, data):
         user = self.users[username]
-        binding, cert = complete_register(user.pop('_u2f_enroll_'), data,
-                                          [self.facet])
-        devices = [DeviceRegistration.wrap(device)
-                   for device in user.get('_u2f_devices_', [])]
-        devices.append(binding)
-        user['_u2f_devices_'] = [d.json for d in devices]
+        enroll = U2fRegisterRequest.wrap(user.pop('_u2f_enroll_'))
+        device, cert = enroll.complete(data, [self.facet])
+        user.setdefault('_u2f_devices', []).append(device.json)
 
         log.info("U2F device enrolled. Username: %s", username)
-        log.debug("Attestation certificate:\n%s", cert.public_bytes(Encoding.PEM))
+        log.debug("Attestation certificate:\n%s",
+                  cert.public_bytes(Encoding.PEM))
 
         return json.dumps(True)
 
     def sign(self, username):
         user = self.users[username]
-        devices = [DeviceRegistration.wrap(device)
-                   for device in user.get('_u2f_devices_', [])]
-        challenge = start_authenticate(devices)
+        challenge = U2fSignRequest.create(self.app_id,
+                                          user.get('_u2f_devices_', []))
         user['_u2f_challenge_'] = challenge.json
-        return challenge.json
+        return json.dumps(challenge.data_for_client)
 
     def verify(self, username, data):
         user = self.users[username]
-        devices = [DeviceRegistration.wrap(device)
-                   for device in user.get('_u2f_devices_', [])]
 
-        challenge = user.pop('_u2f_challenge_')
-        c, t = verify_authenticate(devices, challenge, data, [self.facet])
+        challenge = U2fSignRequest.wrap(user.pop('_u2f_challenge_'))
+        c, t = challenge.complete(data, [self.facet])
         return json.dumps({
             'touch': t,
             'counter': c
