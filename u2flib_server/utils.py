@@ -25,7 +25,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.yubicommon.compat import text_type
 
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
@@ -36,8 +35,12 @@ from cryptography.hazmat.primitives.serialization import load_der_public_key
 from cryptography.x509.oid import NameOID
 
 from base64 import urlsafe_b64decode, urlsafe_b64encode
-from hashlib import sha256
-import os
+import six
+import re
+
+
+BASE64URL = re.compile(br'^[-_a-zA-Z0-9]+=*$')
+
 
 PUB_KEY_DER_PREFIX = b'\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01' \
     b'\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07\x03\x42\x00'
@@ -56,8 +59,10 @@ def pub_key_from_der(der):
 
 
 def websafe_decode(data):
-    if isinstance(data, text_type):
+    if isinstance(data, six.text_type):
         data = data.encode('ascii')
+    if not BASE64URL.match(data):
+        raise ValueError('Invalid character(s)')
     data += b'=' * (-len(data) % 4)
     return urlsafe_b64decode(data)
 
@@ -69,13 +74,9 @@ def websafe_encode(data):
 
 
 def sha_256(data):
-    h = sha256()
+    h = hashes.Hash(hashes.SHA256(), default_backend())
     h.update(data)
-    return h.digest()
-
-
-def rand_bytes(n_bytes):
-    return os.urandom(n_bytes)
+    return h.finalize()
 
 
 def verify_ecdsa_signature(payload, pubkey, signature):

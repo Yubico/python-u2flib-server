@@ -25,7 +25,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server import u2f
+from u2flib_server import data
 from .soft_u2f_v2 import SoftU2FDevice
 import unittest
 
@@ -35,9 +35,10 @@ FACET = APP_ID
 
 def register_token(devices=[]):
     token = SoftU2FDevice()
-    request_data = u2f.start_register(APP_ID, devices)
-    response = token.register(request_data.registerRequests[0].json, FACET)
-    device, cert = u2f.complete_register(request_data, response)
+    request = data.U2fRegisterRequest.create(APP_ID, devices)
+    response = token.register(FACET, request.appId,
+                              request.registerRequests[0].json)
+    device, cert = request.complete(response)
     return device, token
 
 
@@ -52,14 +53,16 @@ class AttestationTest(unittest.TestCase):
         device, token = register_token()
 
         # Authenticate
-        sign_request = u2f.start_authenticate([device])
+        request = data.U2fSignRequest.create(APP_ID, [device])
 
-        response1 = token.getAssertion(
-            sign_request.authenticateRequests[0].json,
-            FACET
+        response = token.getAssertion(
+            FACET,
+            request.appId,
+            request['challenge'],
+            request.registeredKeys[0].key_data,
         )
 
-        assert u2f.verify_authenticate([device], sign_request, response1)
+        request.complete(response)
 
     def test_authenticate_multiple_soft_u2f(self):
         # Register
@@ -67,13 +70,12 @@ class AttestationTest(unittest.TestCase):
         device2, token2 = register_token([device1])
 
         # Authenticate
-        auth_request_data = u2f.start_authenticate([device1, device2])
-
+        request = data.U2fSignRequest.create(APP_ID, [device1, device2])
         response = token1.getAssertion(
-            auth_request_data.authenticateRequests[0].json,
-            FACET
+            FACET,
+            request.appId,
+            request['challenge'],
+            request.registeredKeys[0].key_data,
         )
 
-        assert u2f.verify_authenticate([device1, device2],
-                                       auth_request_data,
-                                       response)
+        request.complete(response)

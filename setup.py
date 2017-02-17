@@ -30,7 +30,7 @@ from u2flib_server.yubicommon.setup import setup
 import sys
 
 
-install_requires = ['cryptography>=1.2']
+install_requires = ['cryptography>=1.2', 'six']
 if sys.version_info < (3, 4):
     install_requires.append('enum34')
 
