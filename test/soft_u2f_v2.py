@@ -98,7 +98,8 @@ class SoftU2FDevice(object):
 
         # ECC key generation
         priv_key = ec.generate_private_key(CURVE, default_backend())
-        pub_key = priv_key.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
+        pub_key = priv_key.public_key().public_bytes(
+            Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
         pub_key = pub_key[-65:]
 
         # Store
@@ -107,7 +108,8 @@ class SoftU2FDevice(object):
         self.keys[key_handle] = (priv_key, app_param)
 
         # Attestation signature
-        cert_priv = load_pem_private_key(CERT_PRIV, password=None, backend=default_backend())
+        cert_priv = load_pem_private_key(
+            CERT_PRIV, password=None, backend=default_backend())
         cert = CERT
         data = b'\x00' + app_param + client_param + key_handle + pub_key
         signer = cert_priv.signer(ec.ECDSA(hashes.SHA256()))
