@@ -27,7 +27,8 @@
 
 
 from u2flib_server.utils import websafe_decode
-from u2flib_server.model import JSONDict, RegistrationData, SignatureData
+from u2flib_server.model import (JSONDict, RegistrationData, SignatureData,
+                                 U2fRegisterRequest, U2fSignRequest)
 from binascii import b2a_hex
 import unittest
 
@@ -128,3 +129,65 @@ class JSONDictTest(unittest.TestCase):
 
     def test_getattr(self):
         self.assertEqual(1, JSONDict(a=1).a)
+
+    def test_required_fields(self):
+        class Foo(JSONDict):
+            _required_fields = ['foo', 'bar']
+
+        Foo({'foo': 1, 'bar': 2})
+        self.assertRaises(ValueError, Foo, {'foo': 1})
+        self.assertRaises(ValueError, Foo, {'bar': 1})
+        self.assertRaises(ValueError, Foo)
+
+
+class U2fRegisterRequestTest(unittest.TestCase):
+    def test_u2f_register_request(self):
+        challenge = "Jtb6wLXjMHN67fV1BVNivz-qnAnD8OOqFju49RDBJro"
+        req = U2fRegisterRequest.create(
+            'https://example.com',
+            [],
+            websafe_decode(challenge)
+        )
+
+        self.assertEqual(U2fRegisterRequest.wrap({
+            "registeredKeys": [],
+            "appId": "https://example.com",
+            "registerRequests": [{
+                "version": "U2F_V2",
+                "challenge": "Jtb6wLXjMHN67fV1BVNivz-qnAnD8OOqFju49RDBJro"
+            }]
+        }), req)
+
+        self.assertEqual(
+            websafe_decode('EAaArVRs5qV39C9S3zO0z9ynVoWeZkuNfeMpsVDQnOk'),
+            req.applicationParameter
+        )
+        self.assertEqual([], req.registeredKeys)
+        self.assertEqual(1, len(req.registerRequests))
+
+        reg_req = req.get_request('U2F_V2')
+        self.assertEqual(reg_req.challenge, websafe_decode(challenge))
+        self.assertEqual(reg_req.version, 'U2F_V2')
+
+
+class U2fSignRequestTest(unittest.TestCase):
+    def test_u2f_sign_request(self):
+        challenge = "Jtb6wLXjMHN67fV1BVNivz-qnAnD8OOqFju49RDBJro"
+        req = U2fSignRequest.wrap(
+            {
+                "appId": "https://example.com",
+                "registeredKeys": [{
+                    "publicKey": "BBCcnAOknoMgokEGuTdfpNLQ-uylwlKp_xbEW8urjJsXK"
+                    "v9XZSL-V8C2nwcPEckav1mKZFr5K96uAoLtuxOUf-E",
+                    "version": "U2F_V2",
+                    "keyHandle": "BIarIKfyMqyf4bEI6tOqGInAfHrrQkMA2eyPJlNnInbAG"
+                    "1tXNpdRs48ef92_b1-mfN4VhaTWxo1SGoxT6CIanw"
+                }],
+                "challenge": challenge
+             }
+        )
+        self.assertEqual(
+            req.applicationParameter,
+            websafe_decode('EAaArVRs5qV39C9S3zO0z9ynVoWeZkuNfeMpsVDQnOk')
+        )
+        self.assertEqual(req.challenge, websafe_decode(challenge))

@@ -26,7 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from u2flib_server.u2f import JSONDict, Transport
+from u2flib_server.model import JSONDict, Transport
 
 
 class VendorInfo(JSONDict):

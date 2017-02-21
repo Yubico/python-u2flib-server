@@ -3,7 +3,7 @@ import unittest
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
-from u2flib_server.attestation.matchers import get_ext_by_oid
+from u2flib_server.attestation.matchers import _get_ext_by_oid
 
 YUBICO_ATTESTATION_CERT_SERIAL_544338083 = b'''-----BEGIN CERTIFICATE-----
 MIICIjCCAQygAwIBAgIEIHHwozALBgkqhkiG9w0BAQswDzENMAsGA1UEAxMEdGVz
@@ -36,11 +36,11 @@ class X509ExtensionsTest(unittest.TestCase):
     def test_get_ext_by_oid_yubico(self):
         self.assertEqual(
             b'1.3.6.1.4.1.41482.1.2',
-            get_ext_by_oid(self.attestation_cert, '1.3.6.1.4.1.41482.2'),
+            _get_ext_by_oid(self.attestation_cert, '1.3.6.1.4.1.41482.2'),
         )
 
     def test_get_ext_by_oid_fido_alliance(self):
         self.assertEqual(
             b'\x03\x02\x040',
-            get_ext_by_oid(self.attestation_cert, '1.3.6.1.4.1.45724.2.1.1'),
+            _get_ext_by_oid(self.attestation_cert, '1.3.6.1.4.1.45724.2.1.1'),
         )

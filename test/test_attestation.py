@@ -25,9 +25,14 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.attestation.metadata import MetadataProvider, Transport
+from u2flib_server.model import Transport
+from u2flib_server.attestation.metadata import MetadataProvider
 from u2flib_server.attestation.resolvers import create_resolver
 from u2flib_server.attestation.data import YUBICO
+from u2flib_server.attestation.model import (
+    VendorInfo, Selector,
+    DeviceInfo, MetadataObject,
+)
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from base64 import b64decode
@@ -72,13 +77,14 @@ class AttestationTest(unittest.TestCase):
 
     def test_resolver(self):
         metadata = YUBICO_RESOLVER.resolve(ATTESTATION_CERT)
-        assert metadata.identifier == '2fb54029-7613-4f1d-94f1-fb876c14a6fe'
+        self.assertEqual(metadata.identifier,
+                         '2fb54029-7613-4f1d-94f1-fb876c14a6fe')
 
     def test_provider(self):
         provider = MetadataProvider(YUBICO_RESOLVER)
         attestation = provider.get_attestation(ATTESTATION_CERT)
 
-        assert attestation.trusted
+        self.assertTrue(attestation.trusted)
 
     def test_versioning_newer(self):
         resolver = create_resolver(YUBICO)
@@ -90,7 +96,7 @@ class AttestationTest(unittest.TestCase):
 
         metadata = resolver.resolve(ATTESTATION_CERT)
 
-        assert metadata is None
+        self.assertIsNone(metadata)
 
     def test_versioning_older(self):
         resolver = create_resolver(YUBICO)
@@ -101,18 +107,45 @@ class AttestationTest(unittest.TestCase):
 
         metadata = resolver.resolve(ATTESTATION_CERT)
 
-        assert metadata.identifier == '2fb54029-7613-4f1d-94f1-fb876c14a6fe'
+        self.assertEqual(metadata.identifier,
+                         '2fb54029-7613-4f1d-94f1-fb876c14a6fe')
 
     def test_transports_from_cert(self):
         provider = MetadataProvider(EMPTY_RESOLVER)
         attestation = provider.get_attestation(ATTESTATION_CERT_WITH_TRANSPORT)
 
-        assert set(attestation.transports) == set([Transport.USB,
-                                                   Transport.NFC])
+        self.assertSetEqual(set(attestation.transports),
+                            set([Transport.USB, Transport.NFC]))
 
     def test_transports_from_metadata(self):
         provider = MetadataProvider(YUBICO_RESOLVER)
         cert = x509.load_der_x509_certificate(ATTESTATION_CERT,
                                               default_backend())
         attestation = provider.get_attestation(cert)
-        assert attestation.transports == [Transport.USB]
+        self.assertEqual(attestation.transports, [Transport.USB])
+
+
+class DeviceInfoTest(unittest.TestCase):
+    def test_selectors_empty(self):
+        self.assertTrue(DeviceInfo().selectors is None)
+
+    def test_selectors(self):
+        devinfo = DeviceInfo(selectors=[{}, {'a': 1}, {'a': 1, 'b': 2}])
+        self.assertEqual([{}, {'a': 1}, {'a': 1, 'b': 2}], devinfo.selectors)
+        self.assertTrue(isinstance(devinfo.selectors[0], Selector))
+        self.assertTrue(isinstance(devinfo.selectors[1], Selector))
+        self.assertTrue(isinstance(devinfo.selectors[2], Selector))
+
+
+class MetadataObjectTest(unittest.TestCase):
+    def test_vendorinfo(self):
+        metadata = MetadataObject(vendorInfo={})
+        self.assertEqual({}, metadata.vendorInfo)
+        self.assertTrue(isinstance(metadata.vendorInfo, VendorInfo))
+
+    def test_devices(self):
+        metadata = MetadataObject(devices=[{}, {'a': 1}, {'a': 1, 'b': 2}])
+        self.assertEqual([{}, {'a': 1}, {'a': 1, 'b': 2}], metadata.devices)
+        self.assertTrue(isinstance(metadata.devices[0], DeviceInfo))
+        self.assertTrue(isinstance(metadata.devices[1], DeviceInfo))
+        self.assertTrue(isinstance(metadata.devices[2], DeviceInfo))
