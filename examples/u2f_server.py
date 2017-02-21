@@ -44,6 +44,7 @@ This example requires webob to be installed.
 from u2flib_server.u2f import (begin_registration, begin_authentication,
                                complete_registration, complete_authentication)
 from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 from webob.dec import wsgify
 from webob import exc
@@ -125,10 +126,10 @@ class U2FServer(object):
         user = self.users[username]
         enroll = user.pop('_u2f_enroll_')
         device, cert = complete_registration(enroll, data, [self.facet])
-        user.setdefault('_u2f_devices', []).append(device.json)
+        user.setdefault('_u2f_devices_', []).append(device.json)
 
         log.info("U2F device enrolled. Username: %s", username)
-        cert = x509.load_der_x509_certificate(cert)
+        cert = x509.load_der_x509_certificate(cert, default_backend())
         log.debug("Attestation certificate:\n%s",
                   cert.public_bytes(Encoding.PEM))
 
@@ -136,8 +137,8 @@ class U2FServer(object):
 
     def sign(self, username):
         user = self.users[username]
-        challenge = begin_authentication(self.app_id,
-                                         user.get('_u2f_devices_', []))
+        challenge = begin_authentication(
+            self.app_id, user.get('_u2f_devices_', []))
         user['_u2f_challenge_'] = challenge.json
         return json.dumps(challenge.data_for_client)
 

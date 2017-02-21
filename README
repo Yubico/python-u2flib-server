@@ -51,12 +51,12 @@ Registration is initiated by sending a request to the server:
 
 ----
 $ curl http://localhost:8081/enroll
-{"authenticateRequests": [], "registerRequests": [{"challenge": "9s80ruHc6q9shJM5WLfOmz-ejb_Rm8dmWCnOvgZ2ovw", "version": "U2F_V2", "appId": "http://localhost:8081"}]}
+{"appId": "http://localhost:8081", "registeredKeys": [], "registerRequests": [{"version": "U2F_V2", "challenge": "9TCtiRRLBFqMokOWfepjej99lMKQhZfm20Sgtay-FMs"}]}
 ----
 The RegisterRequest data is then fed to the U2F client, resulting in the
 RegisterResponse data, which is passed back to the server:
 ----
-$ curl http://localhost:8081/bind -d'data={"clientData": "eyJvcmlnaW4iOiAiaHR0cDovL2xvY2FsaG9zdDo4MDgxIiwgImNoYWxsZW5nZSI6ICJEMnB6VFBaYTdicTY5QUJ1aUdRSUxvOXpjc1RVUlAyNlJMaWZUeUNraWxjIiwgInR5cCI6ICJuYXZpZ2F0b3IuaWQuZmluaXNoRW5yb2xsbWVudCJ9", "registrationData": "BQSivQtJ6-lAgZ2qQ0aUGLEiJSRoLWUSGcmMO8C-GuibA0-xTvmuQfTqKyFJZWOUjGzEIgF4xV6gJ6itcagsyuUWQEQh9noDSu-WtzTOMhK_lKHxwHtQgJHCkzs4mukfpf310K5Dq9k6zBNtZ2RMBWgJhI7hJo4JiFn3k2GUNLwKZpwwggGHMIIBLqADAgECAgkAmb7osQyi7BwwCQYHKoZIzj0EATAhMR8wHQYDVQQDDBZZdWJpY28gVTJGIFNvZnQgRGV2aWNlMB4XDTEzMDcxNzE0MjEwM1oXDTE2MDcxNjE0MjEwM1owITEfMB0GA1UEAwwWWXViaWNvIFUyRiBTb2Z0IERldmljZTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABDvhl91zfpg9n7DeCedcQ8gGXUnemiXoi-JEAxz-EIhkVsMPAyzhtJZ4V3CqMZ-MOUgICt2aMxacMX9cIa8dgS2jUDBOMB0GA1UdDgQWBBQNqL-TV04iaO6mS5tjGE6ShfexnjAfBgNVHSMEGDAWgBQNqL-TV04iaO6mS5tjGE6ShfexnjAMBgNVHRMEBTADAQH_MAkGByqGSM49BAEDSAAwRQIgXJWZdbvOWdhVaG7IJtn44o21Kmi8EHsDk4cAfnZ0r38CIQD6ZPi3Pl4lXxbY7BXFyrpkiOvCpdyNdLLYbSTbvIBQOTBFAiEA1uwJKNez6_BHdA2d-DPmRFJj19biYNkhN86SFH5Z_lYCICld2L3ZAVsm_uNFRt13_N9dlhGu50pb1ql8-_3_p5v1"}'
+$ curl http://localhost:8081/bind -d'data={"registrationData": "BQQNSrGo5bCdPyQNh1etGjidrJPBwTqittKe5DgKWyumIuGSnQxIHzM8Xd9W2eBrAJezRf7nIbxVRYkiA2G_teiEQLJa3tSyM-irgZHNXwsHC-YnfpXJ_uQkRMsgx37oAefHJI3RsBe4yCN2noa-jO1mgtgRrPK405QdcpI7xVk3XmAwggGHMIIBLqADAgECAgkAmb7osQyi7BwwCQYHKoZIzj0EATAhMR8wHQYDVQQDDBZZdWJpY28gVTJGIFNvZnQgRGV2aWNlMB4XDTEzMDcxNzE0MjEwM1oXDTE2MDcxNjE0MjEwM1owITEfMB0GA1UEAwwWWXViaWNvIFUyRiBTb2Z0IERldmljZTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABDvhl91zfpg9n7DeCedcQ8gGXUnemiXoi-JEAxz-EIhkVsMPAyzhtJZ4V3CqMZ-MOUgICt2aMxacMX9cIa8dgS2jUDBOMB0GA1UdDgQWBBQNqL-TV04iaO6mS5tjGE6ShfexnjAfBgNVHSMEGDAWgBQNqL-TV04iaO6mS5tjGE6ShfexnjAMBgNVHRMEBTADAQH_MAkGByqGSM49BAEDSAAwRQIgXJWZdbvOWdhVaG7IJtn44o21Kmi8EHsDk4cAfnZ0r38CIQD6ZPi3Pl4lXxbY7BXFyrpkiOvCpdyNdLLYbSTbvIBQOTBEAiBs0qu8RRZDf4qJo5qnHOd6hNDu9aEyNGQCeHp47D6-9gIgST3rq1JrUn_xvPh5AAGsn64cLvJlF_V0MF2A73tkLOc", "clientData": "eyJvcmlnaW4iOiAiaHR0cDovL2xvY2FsaG9zdDo4MDgxIiwgImNoYWxsZW5nZSI6ICI5VEN0aVJSTEJGcU1va09XZmVwamVqOTlsTUtRaFpmbTIwU2d0YXktRk1zIiwgInR5cCI6ICJuYXZpZ2F0b3IuaWQuZmluaXNoRW5yb2xsbWVudCJ9","version":"U2F_V2"}'
 true
 ----
 The result, "true", indicates that registration was successful.
@@ -67,13 +67,13 @@ request to the server:
 
 ----
 $ curl http://localhost:8081/sign
-{"authenticateRequests": [{"challenge": "EHuxwx0Ayh5F8g7sFmSUFdfY945EWWK4hyhOKivjv7g", "version": "U2F_V2", "keyHandle": "bxXoPvBA6WPHbqGMjrGBDclMXh8O_qqPXGBPlAkmuIh8CO3ttWWLDzX27xGzemMBxpI6kQXKgURztp9sqEBrCA", "appId": "http://localhost:8081"}]}
+{"appId": "http://localhost:8081", "registeredKeys": [{"version": "U2F_V2", "appId": "http://localhost:8081", "keyHandle": "slre1LIz6KuBkc1fCwcL5id-lcn-5CREyyDHfugB58ckjdGwF7jII3aehr6M7WaC2BGs8rjTlB1ykjvFWTdeYA"}], "challenge": "FnueX-NpT9kB7I41dc8DvPXU1-yj7oO_cBT3e9PWOAw"}
 ----
 The AuthenticateRequest data is then fed to the U2F client, resulting in an
 AuthenticateResponse object which is passed back to the server:
 ----
-$ curl http://localhost:8081/verify -d'data={"clientData": "eyJvcmlHR0cDovL2xvY2FsaG9zdDo4MDgxIiwgImNoYWxsZW5nZSI6ICJlNGtScWk3eTdmUHdtZGZ1RnJ5WkxyVUhYby1BdF91YUFwWHdxdkV2UmxzIiwgInR5cCI6ICJuYXZpZ2F0b3IuaWQuZ2V0QXNzZXJ0aW9uIn0", "challenge": "e4kRqi7y7fPwmdfuFryZLrUHXo-At_uaApXwqvEvRls", "keyHandle": "RCH2egNK75a3NM4yEr-UofHAe1CAkcKTOzia6R-l_fXQrkOr2TrME21nZEwFaAmEjuEmjgmIWfeTYZQ0vApmnA", "signatureData": "AQAAAAIwRQIhAIyr0y4xg-pI8NhAUHJmaluGXwZ7yd5i0e7FQE4l9OaEAiB68JP-df7ro8ohxCcgyxfRiKrsY1J67kLcEuYb0MCrDg"}'
-{"touch": "\u0001", "counter": 2}
+$ curl http://localhost:8081/verify -d'data={"keyHandle": "slre1LIz6KuBkc1fCwcL5id-lcn-5CREyyDHfugB58ckjdGwF7jII3aehr6M7WaC2BGs8rjTlB1ykjvFWTdeYA", "signatureData": "AQAAAAEwRgIhALhe7LTwnBHTPQQIGbn_wPR80S7-HPPliZh966vL3VeiAiEA35w-BVDROwdLGlztLgejw9bnXSrYY0-3EC-_qhi0XaI", "clientData": "eyJvcmlnaW4iOiAiaHR0cDovL2xvY2FsaG9zdDo4MDgxIiwgImNoYWxsZW5nZSI6ICJGbnVlWC1OcFQ5a0I3STQxZGM4RHZQWFUxLXlqN29PX2NCVDNlOVBXT0F3IiwgInR5cCI6ICJuYXZpZ2F0b3IuaWQuZ2V0QXNzZXJ0aW9uIn0"}'
+{"touch": 1, "counter": 1}
 ----
 The response indicates success, giving the U2F devices internal counter value,
 as well as the value of the user presence parameter.
