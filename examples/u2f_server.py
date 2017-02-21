@@ -41,7 +41,9 @@ Note that this is intended for test/demo purposes, not production use!
 This example requires webob to be installed.
 """
 
-from u2flib_server.u2f import U2fRegisterRequest, U2fSignRequest
+from u2flib_server.u2f import (begin_registration, begin_authentication,
+                               complete_registration, complete_authentication)
+from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 from webob.dec import wsgify
 from webob import exc
@@ -115,18 +117,18 @@ class U2FServer(object):
             self.users[username] = {}
 
         user = self.users[username]
-        enroll = U2fRegisterRequest.create(self.app_id,
-                                           user.get('_u2f_devices_', []))
+        enroll = begin_registration(self.app_id, user.get('_u2f_devices_', []))
         user['_u2f_enroll_'] = enroll.json
         return json.dumps(enroll.data_for_client)
 
     def bind(self, username, data):
         user = self.users[username]
-        enroll = U2fRegisterRequest.wrap(user.pop('_u2f_enroll_'))
-        device, cert = enroll.complete(data, [self.facet])
+        enroll = user.pop('_u2f_enroll_')
+        device, cert = complete_registration(enroll, data, [self.facet])
         user.setdefault('_u2f_devices', []).append(device.json)
 
         log.info("U2F device enrolled. Username: %s", username)
+        cert = x509.load_der_x509_certificate(cert)
         log.debug("Attestation certificate:\n%s",
                   cert.public_bytes(Encoding.PEM))
 
@@ -134,16 +136,16 @@ class U2FServer(object):
 
     def sign(self, username):
         user = self.users[username]
-        challenge = U2fSignRequest.create(self.app_id,
-                                          user.get('_u2f_devices_', []))
+        challenge = begin_authentication(self.app_id,
+                                         user.get('_u2f_devices_', []))
         user['_u2f_challenge_'] = challenge.json
         return json.dumps(challenge.data_for_client)
 
     def verify(self, username, data):
         user = self.users[username]
 
-        challenge = U2fSignRequest.wrap(user.pop('_u2f_challenge_'))
-        c, t = challenge.complete(data, [self.facet])
+        challenge = user.pop('_u2f_challenge_')
+        c, t = complete_authentication(challenge, data, [self.facet])
         return json.dumps({
             'touch': t,
             'counter': c
