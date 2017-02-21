@@ -26,15 +26,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import unittest
-from u2flib_server import u2f_v2 as u2f
-from u2flib_server.jsapi import RegisterRequest
+from u2flib_server import u2f
 
 
 class SerializationTest(unittest.TestCase):
 
     def test_enroll_serialization(self):
-        enroll1 = u2f.start_register('https://example.com')
-        enroll2 = RegisterRequest(enroll1.json)
+        enroll1 = u2f.U2fRegisterRequest.create('https://example.com', [])
+        enroll2 = u2f.U2fRegisterRequest(enroll1.json)
 
         assert enroll1.appId == enroll2.appId
         assert enroll1.json == enroll2.json

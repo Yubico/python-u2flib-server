@@ -25,7 +25,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.data import JSONDict
+
+from u2flib_server.u2f import JSONDict, Transport
 
 
 class VendorInfo(JSONDict):
@@ -47,7 +48,10 @@ class DeviceInfo(JSONDict):
 
     @property
     def transports(self):
-        return self.get('transports', 0)
+        transport_int = self.get('transports')
+        if transport_int is None:
+            return None
+        return [t for t in Transport if t.value & transport_int]
 
 
 class MetadataObject(JSONDict):
@@ -59,3 +63,34 @@ class MetadataObject(JSONDict):
     @property
     def devices(self):
         return [DeviceInfo(dev) for dev in self['devices']]
+
+
+class Attestation(object):
+    def __init__(self, trusted, vendor_info=None, device_info=None,
+                 cert_transports=None):
+        self._trusted = trusted
+        self._vendor_info = vendor_info
+        self._device_info = device_info
+
+        if device_info.transports is None and cert_transports is None:
+            self._all_transports = None
+        else:
+            transports = sum(t.value for t in cert_transports or 0) | \
+                sum(t.value for t in device_info.transports or 0)
+            self._transports = [t for t in Transport if t.value & transports]
+
+    @property
+    def trusted(self):
+        return self._trusted
+
+    @property
+    def vendor_info(self):
+        return self._vendor_info
+
+    @property
+    def device_info(self):
+        return self._device_info
+
+    @property
+    def transports(self):
+        return self._transports

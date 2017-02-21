@@ -1,9 +1,38 @@
+# Copyright (c) 2013 Yubico AB
+# All rights reserved.
+#
+#   Redistribution and use in source and binary forms, with or
+#   without modification, are permitted provided that the following
+#   conditions are met:
+#
+#    1. Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#    2. Redistributions in binary form must reproduce the above
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
+#       with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+
 from u2flib_server.utils import websafe_encode, websafe_decode, sha_256
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import load_der_public_key
+from binascii import a2b_hex
 from enum import Enum
 import struct
 import json
@@ -11,10 +40,36 @@ import six
 import os
 
 
+__all__ = [
+    'Transport',
+    'Type',
+    'RegistrationData',
+    'SignatureData',
+    'RegisteredKey',
+    'DeviceRegistration',
+    'ClientData',
+    'RegisterRequest',
+    'RegisterResponse',
+    'SignResponse',
+    'U2fRegisterRequest',
+    'U2fSignRequest'
+]
+
+
 U2F_V2 = 'U2F_V2'
 
-PUB_KEY_DER_PREFIX = b'\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01' \
-    b'\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07\x03\x42\x00'
+TRANSPORTS_EXT_OID = x509.ObjectIdentifier('1.3.6.1.4.1.45724.2.1.1')
+PUB_KEY_DER_PREFIX = a2b_hex(
+    '3059301306072a8648ce3d020106082a8648ce3d030107034200')
+
+CERTS_TO_FIX = [
+    a2b_hex('349bca1031f8c82c4ceca38b9cebf1a69df9fb3b94eed99eb3fb9aa3822d26e8'),
+    a2b_hex('dd574527df608e47ae45fbba75a2afdd5c20fd94a02419381813cd55a2a3398f'),
+    a2b_hex('1d8764f0f7cd1352df6150045c8f638e517270e8b5dda1c63ade9c2280240cae'),
+    a2b_hex('d0edc9a91a1677435a953390865d208c55b3183c6759c9b5a7ff494c322558eb'),
+    a2b_hex('6073c436dcd064a48127ddbf6032ac1a66fd59a0c24434f070d4e564c124c897'),
+    a2b_hex('ca993121846c464d666096d35f13bf44c1b05af205f9b4a1e00cf6cc10c5e511')
+]
 
 
 def _parse_tlv_size(tlv):
@@ -34,6 +89,12 @@ def _pop_bytes(data, l):
     return x
 
 
+def _fix_cert(der):  # Some early certs have UNUSED BITS incorrectly set.
+    if sha_256(der) in CERTS_TO_FIX:
+        der = der[:-257] + b'\0' + der[-256:]
+    return der
+
+
 def _validate_client_data(client_data, challenge, typ, valid_facets):
     if client_data.typ != typ:
         raise ValueError("Wrong type! Was: %r, expecting: %r" % (
@@ -48,6 +109,45 @@ def _validate_client_data(client_data, challenge, typ, valid_facets):
             client_data.origin, valid_facets))
 
 
+class Transport(Enum):
+    BT = 0x01  # Bluetooth Classic
+    BLE = 0x02  # Bluetooth Low Energy
+    USB = 0x04
+    NFC = 0x08
+
+    @property
+    def key(self):
+        return self.name.lower()
+
+    @staticmethod
+    def transports_from_cert(cert):
+        if isinstance(cert, bytes):
+            cert = x509.load_der_x509_certificate(cert, default_backend())
+        try:
+            ext = cert.extensions.get_extension_for_oid(TRANSPORTS_EXT_OID)
+            der_bitstring = ext.value.value
+            int_bytes = bytearray(der_bitstring[3:])
+
+            # Mask away unused bits (should already be 0, but make sure)
+            unused_bits = six.indexbytes(der_bitstring, 2)
+            int_bytes[-1] &= (0xff << unused_bits)
+
+            # Reverse the bitstring and convert to integer
+            transports = 0
+            for byte in int_bytes:
+                for _ in range(8):
+                    transports = (transports << 1) | (byte & 1)
+                    byte >>= 1
+            return [t for t in Transport if t.value & transports]
+        except x509.ExtensionNotFound:
+            return None
+
+
+class Type(Enum):
+    REGISTER = 'navigator.id.finishEnrollment'
+    SIGN = 'navigator.id.getAssertion'
+
+
 class RegistrationData(object):
 
     def __init__(self, data):
@@ -57,32 +157,35 @@ class RegistrationData(object):
         buf = bytearray(data)
         if buf.pop(0) != 0x05:
             raise ValueError('Reserved byte value must be 0x05')
-        self.pubkey = _pop_bytes(buf, 65)
+        self.pub_key = _pop_bytes(buf, 65)
         self.key_handle = _pop_bytes(buf, buf.pop(0))
         cert_len = _parse_tlv_size(buf)
-        self.certificate = _pop_bytes(buf, cert_len)
+        self.certificate = _fix_cert(_pop_bytes(buf, cert_len))
         self.signature = bytes(buf)
 
     @property
     def keyHandle(self):
         return websafe_encode(self.key_handle)
 
+    @property
+    def publicKey(self):
+        return websafe_encode(self.pub_key)
+
     def verify(self, app_param, chal_param):
-        # TODO: Fix signature of certificate
         cert = x509.load_der_x509_certificate(self.certificate,
                                               default_backend())
         pubkey = cert.public_key()
         verifier = pubkey.verifier(self.signature, ec.ECDSA(hashes.SHA256()))
 
         verifier.update(b'\0' + app_param + chal_param + self.key_handle +
-                        self.pubkey)
+                        self.pub_key)
         verifier.verify()
 
     @property
     def bytes(self):
         return (
             six.int2byte(0x05) +
-            self.pubkey +
+            self.pub_key +
             six.int2byte(len(self.key_handle)) +
             self.key_handle +
             self.certificate +
@@ -114,43 +217,26 @@ class SignatureData(object):
     @property
     def bytes(self):
         return (
-            self.user_presence +
+            six.int2byte(self.user_presence) +
             struct.pack('>I', self.counter) +
             self.signature
         )
-
-
-class Transport(Enum):
-    BT = 0x01  # Bluetooth Classic
-    BLE = 0x02  # Bluetooth Low Energy
-    USB = 0x04
-    NFC = 0x08
-
-
-class Type(Enum):
-    REGISTER = 'navigator.id.finishEnrollment'
-    SIGN = 'navigator.id.getAssertion'
 
 
 class JSONDict(dict):
     _required_fields = []
 
     def __init__(self, *args, **kwargs):
-        if len(args) == 1:
-            data = args[0]
-        elif len(args) == 0:
-            data = kwargs
-        else:
-            raise TypeError("Wrong number of arguments given!")
-
-        if isinstance(data, six.text_type):
-            self.update(json.loads(data))
-        elif isinstance(data, six.binary_type):
-            self.update(json.loads(data.decode('utf-8')))
-        elif isinstance(data, dict):
-            self.update(data)
-        else:
-            raise TypeError("Unexpected type! Expected a JSON string, or dict")
+        if len(args) == 1 and not kwargs:
+            arg = args[0]
+            args = tuple()
+            if isinstance(arg, six.text_type):
+                kwargs = json.loads(arg)
+            elif isinstance(arg, six.binary_type):
+                kwargs = json.loads(arg.decode('utf-8'))
+            else:
+                kwargs = dict(arg)
+        super(JSONDict, self).__init__(*args, **kwargs)
 
         missing = set(self._required_fields).difference(self.keys())
         if missing:
@@ -204,7 +290,7 @@ class RegisteredKey(JSONDict, WithAppId, WithKeyHandle):
         }
         if 'appId' in self:
             data['appId'] = self['appId']
-        if 'transports' in self:
+        if self.get('transports') is not None:
             data['transports'] = self['transports']
         return data
 
@@ -217,6 +303,10 @@ class RegisteredKey(JSONDict, WithAppId, WithKeyHandle):
 
 class DeviceRegistration(RegisteredKey):
     _required_fields = ['version', 'keyHandle', 'publicKey']
+
+    @property
+    def publicKey(self):
+        return websafe_decode(self['publicKey'])
 
 
 class ClientData(JSONDict, WithChallenge):
@@ -260,10 +350,6 @@ class RegisterResponse(JSONDict, WithClientData):
     @property
     def registrationData(self):
         return RegistrationData(self['registrationData'])
-
-    @property
-    def transports(self):
-        return None  # TODO
 
     def verify(self, app_param):
         self.registrationData.verify(app_param, self.challengeParameter)
@@ -332,13 +418,16 @@ class U2fRegisterRequest(JSONDict, WithAppId, WithRegisteredKeys):
 
         resp.verify(self.applicationParameter)
         registration_data = resp.registrationData
+        transports = Transport.transports_from_cert(
+            registration_data.certificate)
+        transports = [t.key for t in transports] if transports else transports
 
         return DeviceRegistration(
             version=req.version,
             keyHandle=registration_data.keyHandle,
             appId=self.appId,
-            publicKey=registration_data.pubkey,
-            transports=resp.transports,
+            publicKey=registration_data.publicKey,
+            transports=transports,
         ), registration_data.certificate
 
 

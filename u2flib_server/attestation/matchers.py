@@ -25,9 +25,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from cryptography.x509 import (
-    ExtensionNotFound, ObjectIdentifier
-)
+from cryptography.x509 import ExtensionNotFound, ObjectIdentifier
 
 
 __all__ = [
@@ -53,14 +51,13 @@ class FingerprintMatcher(DeviceMatcher):
         return certificate.get_fingerprint('sha1').lower() in fingerprints
 
 
-def get_ext_by_oid(cert, oid):
+def _get_ext_by_oid(cert, oid):
     oid = ObjectIdentifier(oid)
     try:
         extension = cert.extensions.get_extension_for_oid(oid)
+        return extension.value.value
     except ExtensionNotFound:
         return None
-
-    return extension.value.value
 
 
 class ExtensionMatcher(DeviceMatcher):
@@ -69,7 +66,7 @@ class ExtensionMatcher(DeviceMatcher):
     def matches(self, certificate, parameters={}):
         key = parameters.get('key')
         match_value = parameters.get('value')
-        extension_value = get_ext_by_oid(certificate, key)
+        extension_value = _get_ext_by_oid(certificate, key)
         if extension_value is not None:
             if match_value is None or match_value == extension_value:
                 return True

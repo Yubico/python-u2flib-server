@@ -25,9 +25,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.utils import (websafe_encode, websafe_decode, sha_256)
-from u2flib_server.data import (RegisterRequest, RegisterResponse,
-                                SignResponse, ClientData, Type, RegisteredKey)
+from u2flib_server.utils import websafe_encode, sha_256
+from u2flib_server.model import (RegisterRequest, RegisterResponse,
+                                 SignResponse, ClientData, Type, RegisteredKey)
 from u2flib_server.yubicommon.compat import int2byte
 from base64 import b64decode
 import struct

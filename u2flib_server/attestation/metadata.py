@@ -25,34 +25,30 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from u2flib_server.attestation.model import DeviceInfo
 from u2flib_server.attestation.matchers import DEFAULT_MATCHERS
 from u2flib_server.attestation.resolvers import create_resolver
-from u2flib_server.jsapi import DeviceInfo
-from u2flib_server.yubicommon.compat import byte2int
-
-from cryptography.x509 import ObjectIdentifier, ExtensionNotFound
-from enum import IntEnum
-
-__all__ = ['Attestation', 'MetadataProvider', 'Transport']
+from u2flib_server.model import Transport
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 
 
-TRANSPORTS_EXT_OID = ObjectIdentifier('1.3.6.1.4.1.45724.2.1.1')
-
-
-class Transport(IntEnum):
-    BT_CLASSIC = 0x01  # Bluetooth Classic
-    BLE = 0x02  # Bluetooth Low Energy
-    USB = 0x04
-    NFC = 0x08
+__all__ = ['Attestation', 'MetadataProvider']
 
 
 class Attestation(object):
     def __init__(self, trusted, vendor_info=None, device_info=None,
-                 cert_transports=0):
+                 cert_transports=None):
         self._trusted = trusted
         self._vendor_info = vendor_info
         self._device_info = device_info
-        self._transports = cert_transports | device_info.transports
+
+        if device_info.transports is None and cert_transports is None:
+            self._all_transports = None
+        else:
+            transports = sum(t.value for t in cert_transports or []) | \
+                sum(t.value for t in device_info.transports or [])
+            self._transports = [t for t in Transport if t.value & transports]
 
     @property
     def trusted(self):
@@ -71,35 +67,6 @@ class Attestation(object):
         return self._transports
 
 
-def get_transports(cert):
-    """Parses transport extension from attestation cert.
-    As the information is stored as a bitstring, which is a bit unwieldy to work
-    with, we convert it into an integer where each bit represents a transport
-    flag (as defined in the Transport IntEnum).
-    """
-    try:
-        ext = cert.extensions.get_extension_for_oid(TRANSPORTS_EXT_OID)
-        der_bitstring = ext.value.value
-        int_bytes = [byte2int(b) for b in der_bitstring[3:]]
-
-        # Mask away unused bits (should already be 0, but make sure)
-        unused_bits = byte2int(der_bitstring[2])
-        unused_bit_mask = 0xff
-        for _ in range(unused_bits):
-            unused_bit_mask <<= 1
-        int_bytes[-1] &= unused_bit_mask
-
-        # Reverse the bitstring and convert to integer
-        transports = 0
-        for byte in int_bytes:
-            for _ in range(8):
-                transports = (transports << 1) | (byte & 1)
-                byte >>= 1
-        return transports
-    except ExtensionNotFound:
-        return 0
-
-
 class MetadataProvider(object):
 
     def __init__(self, resolver=None, matchers=DEFAULT_MATCHERS):
@@ -115,6 +82,8 @@ class MetadataProvider(object):
         self._matchers[matcher.selector_type] = matcher
 
     def get_attestation(self, cert):
+        if isinstance(cert, bytes):
+            cert = x509.load_der_x509_certificate(cert, default_backend())
         metadata = self._resolver.resolve(cert)
         if metadata is not None:
             trusted = True
@@ -124,7 +93,7 @@ class MetadataProvider(object):
             trusted = False
             vendor_info = None
             device_info = DeviceInfo()
-        cert_transports = get_transports(cert)
+        cert_transports = Transport.transports_from_cert(cert)
         return Attestation(trusted, vendor_info, device_info, cert_transports)
 
     def _lookup_device(self, metadata, cert):

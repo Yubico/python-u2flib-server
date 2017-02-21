@@ -71,16 +71,12 @@ EMPTY_RESOLVER = create_resolver([])
 class AttestationTest(unittest.TestCase):
 
     def test_resolver(self):
-        cert = x509.load_der_x509_certificate(ATTESTATION_CERT,
-                                              default_backend())
-        metadata = YUBICO_RESOLVER.resolve(cert)
+        metadata = YUBICO_RESOLVER.resolve(ATTESTATION_CERT)
         assert metadata.identifier == '2fb54029-7613-4f1d-94f1-fb876c14a6fe'
 
     def test_provider(self):
         provider = MetadataProvider(YUBICO_RESOLVER)
-        cert = x509.load_der_x509_certificate(ATTESTATION_CERT,
-                                              default_backend())
-        attestation = provider.get_attestation(cert)
+        attestation = provider.get_attestation(ATTESTATION_CERT)
 
         assert attestation.trusted
 
@@ -92,9 +88,7 @@ class AttestationTest(unittest.TestCase):
 
         resolver.add_metadata(newer)
 
-        cert = x509.load_der_x509_certificate(ATTESTATION_CERT,
-                                              default_backend())
-        metadata = resolver.resolve(cert)
+        metadata = resolver.resolve(ATTESTATION_CERT)
 
         assert metadata is None
 
@@ -105,23 +99,20 @@ class AttestationTest(unittest.TestCase):
 
         resolver.add_metadata(newer)
 
-        cert = x509.load_der_x509_certificate(ATTESTATION_CERT,
-                                              default_backend())
-        metadata = resolver.resolve(cert)
+        metadata = resolver.resolve(ATTESTATION_CERT)
 
         assert metadata.identifier == '2fb54029-7613-4f1d-94f1-fb876c14a6fe'
 
     def test_transports_from_cert(self):
         provider = MetadataProvider(EMPTY_RESOLVER)
-        cert = x509.load_der_x509_certificate(ATTESTATION_CERT_WITH_TRANSPORT,
-                                              default_backend())
-        attestation = provider.get_attestation(cert)
+        attestation = provider.get_attestation(ATTESTATION_CERT_WITH_TRANSPORT)
 
-        assert attestation.transports == Transport.USB | Transport.NFC
+        assert set(attestation.transports) == set([Transport.USB,
+                                                   Transport.NFC])
 
     def test_transports_from_metadata(self):
         provider = MetadataProvider(YUBICO_RESOLVER)
         cert = x509.load_der_x509_certificate(ATTESTATION_CERT,
                                               default_backend())
         attestation = provider.get_attestation(cert)
-        assert attestation.transports == Transport.USB
+        assert attestation.transports == [Transport.USB]

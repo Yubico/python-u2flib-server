@@ -25,17 +25,17 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.jsapi import MetadataObject
+from u2flib_server.attestation.model import MetadataObject
 from u2flib_server.attestation.data import YUBICO
-from u2flib_server.utils import verify_cert_signature
-from u2flib_server.yubicommon.compat import string_types, text_type
+import six
 import os
 import json
 
 from cryptography import x509
+from cryptography.x509.oid import NameOID
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
-from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives.asymmetric import ec, rsa, padding
 
 __all__ = ['MetadataResolver', 'create_resolver']
 
@@ -67,30 +67,53 @@ class MetadataResolver(object):
 
     def _index(self, metadata):
         for cert_pem in metadata.trustedCertificates:
-            if isinstance(cert_pem, text_type):
+            if isinstance(cert_pem, six.text_type):
                 cert_pem = cert_pem.encode('ascii')
             cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
-            subject = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+            subject = cert.subject \
+                .get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
             if subject not in self._certs:
                 self._certs[subject] = []
             self._certs[subject].append(cert)
             self._metadata[cert] = metadata
 
-    def _verify_cert(self, cert, key):
+    def _verify_cert(self, cert, pubkey):
         """Returns True if cert contains a correct signature made using the
         provided key
 
         NB: This *only* checks the signature. No other checks are performed.
         E.g. the trust chain, expiry are all ignored.
         """
+        cert_signature = cert.signature
+        cert_bytes = cert.tbs_certificate_bytes
+
+        if isinstance(pubkey, rsa.RSAPublicKey):
+            verifier = pubkey.verifier(
+                cert_signature,
+                padding.PKCS1v15(),
+                cert.signature_hash_algorithm
+            )
+        elif isinstance(pubkey, ec.EllipticCurvePublicKey):
+            verifier = pubkey.verifier(
+                cert_signature,
+                ec.ECDSA(cert.signature_hash_algorithm)
+            )
+        else:
+            raise ValueError("Unsupported public key value")
+
+        verifier.update(cert_bytes)
+
         try:
-            verify_cert_signature(cert, key)
+            verifier.verify()
             return True
         except InvalidSignature:
             return False
 
     def resolve(self, cert):
-        issuer = cert.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+        if isinstance(cert, bytes):
+            cert = x509.load_der_x509_certificate(cert, default_backend())
+        issuer = cert.issuer \
+            .get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
 
         for issuer in self._certs.get(issuer, []):
             if self._verify_cert(cert, issuer.public_key()):
@@ -114,7 +137,7 @@ def _add_data(resolver, data):
         for d in data:
             _add_data(resolver, d)
         return
-    elif isinstance(data, string_types):
+    elif isinstance(data, six.string_types):
         if os.path.isdir(data):
             data = _load_from_dir(data)
         elif os.path.isfile(data):

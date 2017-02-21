@@ -41,7 +41,7 @@ Note that this is intended for test/demo purposes, not production use!
 This example requires webob to be installed.
 """
 
-from u2flib_server.data import (U2fRegisterRequest, U2fSignRequest)
+from u2flib_server.u2f import U2fRegisterRequest, U2fSignRequest
 from cryptography.hazmat.primitives.serialization import Encoding
 from webob.dec import wsgify
 from webob import exc

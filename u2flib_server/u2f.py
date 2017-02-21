@@ -25,63 +25,29 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server import u2f_v2
-from u2flib_server.jsapi import (AuthenticateRequestData, RegisterRequestData,
-                                 SignResponse, RegisterResponse)
-from u2flib_server.utils import rand_bytes
+
+from u2flib_server.model import U2fRegisterRequest, U2fSignRequest
 
 
 __all__ = [
-    'start_register',
-    'complete_register',
-    'start_authenticate',
-    'verify_authenticate'
+    'begin_registration',
+    'complete_registration',
+    'begin_authentication',
+    'complete_authentication'
 ]
 
 
-def start_register(app_id, devices, challenge=None):
-    # RegisterRequest
-    register_request = u2f_v2.start_register(app_id, challenge)
-
-    # SignRequest[]
-    sign_requests = start_authenticate(
-        devices,
-        'check-only'
-    ).authenticateRequests
-
-    return RegisterRequestData(
-        registerRequests=[register_request],
-        authenticateRequests=sign_requests
-    )
+def begin_registration(app_id, registered_keys=[], challenge=None):
+    return U2fRegisterRequest.create(app_id, registered_keys, challenge)
 
 
-def complete_register(request_data, response, valid_facets=None):
-    request_data = RegisterRequestData.wrap(request_data)
-    response = RegisterResponse.wrap(response)
-
-    return u2f_v2.complete_register(request_data.getRegisterRequest(response),
-                                    response,
-                                    valid_facets)
+def complete_registration(request, response, valid_facets=None):
+    return U2fRegisterRequest.wrap(request).complete(response, valid_facets)
 
 
-def start_authenticate(devices, challenge=None):
-    sign_requests = [u2f_v2.start_authenticate(d, challenge or rand_bytes(32))
-                     for d in devices]
-
-    return AuthenticateRequestData(authenticateRequests=sign_requests)
+def begin_authentication(app_id, devices, challenge=None):
+    return U2fSignRequest.create(app_id, devices, challenge)
 
 
-def verify_authenticate(devices, request_data, response, valid_facets=None):
-    request_data = AuthenticateRequestData.wrap(request_data)
-    response = SignResponse.wrap(response)
-
-    sign_request = request_data.getAuthenticateRequest(response)
-
-    device = next(d for d in devices if d.keyHandle == sign_request.keyHandle)
-
-    return u2f_v2.verify_authenticate(
-        device,
-        sign_request,
-        response,
-        valid_facets
-    )
+def complete_authentication(request, response, valid_facets=None):
+    return U2fSignRequest.wrap(request).complete(response, valid_facets)

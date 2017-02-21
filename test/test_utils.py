@@ -2,10 +2,7 @@
 
 import unittest
 
-from u2flib_server.utils import (
-    websafe_encode,
-    websafe_decode,
-)
+from u2flib_server.utils import websafe_encode, websafe_decode
 
 
 class TestWebSafe(unittest.TestCase):
