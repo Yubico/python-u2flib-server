@@ -145,6 +145,13 @@ class U2fRegisterRequestTest(unittest.TestCase):
 
 
 class U2fSignRequestTest(unittest.TestCase):
+    def test_missing_keys(self):
+        self.assertRaises(ValueError, U2fSignRequest.wrap, {
+            "appId": "https://example.com",
+            "challenge": "0000",
+            "registeredKeys": []
+        })
+
     def test_u2f_sign_request(self):
         challenge = "Jtb6wLXjMHN67fV1BVNivz-qnAnD8OOqFju49RDBJro"
         req = U2fSignRequest.wrap(

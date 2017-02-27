@@ -434,6 +434,11 @@ class U2fRegisterRequest(JSONDict, WithAppId, WithRegisteredKeys):
 class U2fSignRequest(JSONDict, WithAppId, WithChallenge, WithRegisteredKeys):
     _required_fields = ['appId', 'challenge', 'registeredKeys']
 
+    def __init__(self, *args, **kwargs):
+        super(U2fSignRequest, self).__init__(*args, **kwargs)
+        if len(self.registeredKeys) == 0:
+            raise ValueError('Must have at least one RegisteredKey')
+
     @property
     def data_for_client(self):
         return {
