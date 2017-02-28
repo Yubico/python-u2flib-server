@@ -26,6 +26,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from u2flib_server.attestation.resolvers import create_resolver
-from u2flib_server.attestation.metadata import MetadataProvider, Attestation
+from u2flib_server.attestation.metadata import MetadataProvider
 
-__all__ = ['create_resolver', 'MetadataProvider', 'Attestation']
+__all__ = ['create_resolver', 'MetadataProvider']

@@ -25,7 +25,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.attestation.model import DeviceInfo
+from u2flib_server.attestation.model import DeviceInfo, Attestation
 from u2flib_server.attestation.matchers import DEFAULT_MATCHERS
 from u2flib_server.attestation.resolvers import create_resolver
 from u2flib_server.model import Transport
@@ -33,38 +33,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
 
-__all__ = ['Attestation', 'MetadataProvider']
-
-
-class Attestation(object):
-    def __init__(self, trusted, vendor_info=None, device_info=None,
-                 cert_transports=None):
-        self._trusted = trusted
-        self._vendor_info = vendor_info
-        self._device_info = device_info
-
-        if device_info.transports is None and cert_transports is None:
-            self._all_transports = None
-        else:
-            transports = sum(t.value for t in cert_transports or []) | \
-                sum(t.value for t in device_info.transports or [])
-            self._transports = [t for t in Transport if t.value & transports]
-
-    @property
-    def trusted(self):
-        return self._trusted
-
-    @property
-    def vendor_info(self):
-        return self._vendor_info
-
-    @property
-    def device_info(self):
-        return self._device_info
-
-    @property
-    def transports(self):
-        return self._transports
+__all__ = ['MetadataProvider']
 
 
 class MetadataProvider(object):

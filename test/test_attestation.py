@@ -4,7 +4,7 @@ from u2flib_server.attestation.resolvers import create_resolver
 from u2flib_server.attestation.data import YUBICO
 from u2flib_server.attestation.model import (
     VendorInfo, Selector,
-    DeviceInfo, MetadataObject,
+    DeviceInfo, MetadataObject
 )
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend

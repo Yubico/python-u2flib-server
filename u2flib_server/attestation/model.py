@@ -73,10 +73,10 @@ class Attestation(object):
         self._device_info = device_info
 
         if device_info.transports is None and cert_transports is None:
-            self._all_transports = None
+            self._transports = None
         else:
-            transports = sum(t.value for t in cert_transports or 0) | \
-                sum(t.value for t in device_info.transports or 0)
+            transports = sum(t.value for t in cert_transports or []) | \
+                sum(t.value for t in device_info.transports or [])
             self._transports = [t for t in Transport if t.value & transports]
 
     @property
