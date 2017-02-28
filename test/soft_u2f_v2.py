@@ -28,8 +28,8 @@
 from u2flib_server.utils import websafe_encode, sha_256
 from u2flib_server.model import (RegisterRequest, RegisterResponse,
                                  SignResponse, ClientData, Type, RegisteredKey)
-from u2flib_server.yubicommon.compat import int2byte
 from base64 import b64decode
+import six
 import struct
 import os
 
@@ -116,7 +116,7 @@ class SoftU2FDevice(object):
         signer.update(data)
         signature = signer.finalize()
 
-        raw_response = (b'\x05' + pub_key + int2byte(len(key_handle)) +
+        raw_response = (b'\x05' + pub_key + six.int2byte(len(key_handle)) +
                         key_handle + cert + signature)
 
         return RegisterResponse(
@@ -125,7 +125,7 @@ class SoftU2FDevice(object):
             clientData=websafe_encode(client_data),
         )
 
-    def getAssertion(self, facet, app_id, challenge, key, touch=False):
+    def getAssertion(self, facet, app_id, challenge, key, touch_byte=1):
         """
         signData = {
             'version': "U2F_V2",
@@ -159,7 +159,7 @@ class SoftU2FDevice(object):
         self.counter += 1
 
         # Create signature
-        touch = int2byte(1 if touch else 0)
+        touch = six.int2byte(touch_byte)
         counter = struct.pack('>I', self.counter)
 
         data = app_param + touch + counter + client_param

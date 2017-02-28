@@ -25,8 +25,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from u2flib_server.yubicommon.setup import setup
+from __future__ import absolute_import
 
+from release import setup
 import sys
 
 

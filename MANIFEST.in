@@ -1,3 +1,4 @@
+include release.py
 include COPYING
 include NEWS
 include ChangeLog
