@@ -475,4 +475,4 @@ class U2fSignRequest(JSONDict, WithAppId, WithChallenge, WithRegisteredKeys):
 
         sign_data = resp.signatureData
 
-        return sign_data.counter, sign_data.user_presence
+        return device, sign_data.counter, sign_data.user_presence

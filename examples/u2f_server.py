@@ -146,8 +146,9 @@ class U2FServer(object):
         user = self.users[username]
 
         challenge = user.pop('_u2f_challenge_')
-        c, t = complete_authentication(challenge, data, [self.facet])
+        device, c, t = complete_authentication(challenge, data, [self.facet])
         return json.dumps({
+            'keyHandle': device['keyHandle'],
             'touch': t,
             'counter': c
         })
