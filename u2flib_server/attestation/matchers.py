@@ -67,10 +67,11 @@ class ExtensionMatcher(DeviceMatcher):
         key = parameters.get('key')
         match_value = parameters.get('value')
         extension_value = _get_ext_by_oid(certificate, key)
-        if extension_value is not None:
-            if match_value is None or match_value == extension_value:
-                return True
-        return False
+
+        return extension_value is not None and (
+            match_value is None or
+            match_value.encode('utf-8') == extension_value
+        )
 
 
 DEFAULT_MATCHERS = [

@@ -41,6 +41,22 @@ ZjxS0WUKht48Z2rIjk5lZzERSaY3RrX3UtrnZEIzCmInXOrcRPeAD4ZutpiwuHe6
 2ABsjuMRnKbATbOUiLdknNyPYYQz2g==
 """)
 
+ATTESTATION_CERT_WITH_KEY_VALUE_IDENTIFIER = b64decode(b"""
+MIICQzCCAS2gAwIBAgIEF/DtRjALBgkqhkiG9w0BAQswLjEsMCoGA1UEAxMjWXVi
+aWNvIFUyRiBSb290IENBIFNlcmlhbCA0NTcyMDA2MzEwIBcNMTQwODAxMDAwMDAw
+WhgPMjA1MDA5MDQwMDAwMDBaMCkxJzAlBgNVBAMMHll1YmljbyBVMkYgRUUgU2Vy
+aWFsIDQwMTY2NTM1MDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABEPqOukfQCYH
+iqB+oNxSP1l5r3cVBcv/0wK3iW55eORN9qygi0DMtp5ypZWbNVX2V9d+hX/6UC4V
+K9gQdAuvUaWjOzA5MCIGCSsGAQQBgsQKAgQVMS4zLjYuMS40LjEuNDE0ODIuMS4y
+MBMGCysGAQQBguUcAgEBBAQDAgQwMAsGCSqGSIb3DQEBCwOCAQEAL8JwapHJJDrk
+N+UvUyTQx0rgKncEMESW3heCgQxBt2TR3W9QHEuRi9RX8whiIggGFaTL2kGUoRMY
+r0QttOD5Su8o+MywhXbNHhe1Ohh/YeiTcWZy1xnFwQApOud5M5BwZ+y7yyKbOFPv
+udCtsNIAULuRzPgdXr/113NDAw+FlsJbGNUnS/8PzhUPo6Oblgg/7Lq5kviKnLuV
+ZWZ7Vsz3SKUnhc5xho+3aRsweu+n0LEDos4IBAdIpFprq/Eqoo5azXDBQJb6tHjQ
+M1jUQwru/G+mndWp8KwBCnGp6kA64eAWxD3pfT/xrOhbfeB2D8ZHyxTxXmjCXcAE
+jHl3VfEmFQ==
+""")
+
 
 YUBICO_RESOLVER = create_resolver(YUBICO)
 EMPTY_RESOLVER = create_resolver([])
@@ -58,6 +74,19 @@ class AttestationTest(unittest.TestCase):
         attestation = provider.get_attestation(ATTESTATION_CERT)
 
         self.assertTrue(attestation.trusted)
+
+    def test_device_info_from_empty_oid(self):
+        provider = MetadataProvider(YUBICO_RESOLVER)
+        attestation = provider.get_attestation(ATTESTATION_CERT)
+        self.assertEqual(attestation.device_info['deviceId'],
+                         '1.3.6.1.4.1.41482.1.2')
+
+    def test_device_info_from_key_value_oid(self):
+        provider = MetadataProvider(YUBICO_RESOLVER)
+        attestation = provider.get_attestation(
+            ATTESTATION_CERT_WITH_KEY_VALUE_IDENTIFIER)
+        self.assertEqual(attestation.device_info['deviceId'],
+                         '1.3.6.1.4.1.41482.1.2')
 
     def test_versioning_newer(self):
         resolver = create_resolver(YUBICO)
