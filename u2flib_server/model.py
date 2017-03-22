@@ -73,13 +73,13 @@ CERTS_TO_FIX = [
 
 
 def _parse_tlv_size(tlv):
-    l = six.indexbytes(tlv, 1)
+    l = tlv[1]
     n_bytes = 1
     if l > 0x80:
         n_bytes = l - 0x80
         l = 0
         for i in range(2, 2 + n_bytes):
-            l = l * 256 + six.indexbytes(tlv, i)
+            l = l * 256 + tlv[i]
     return 2 + n_bytes + l
 
 
@@ -151,9 +151,6 @@ class Type(Enum):
 class RegistrationData(object):
 
     def __init__(self, data):
-        if isinstance(data, six.text_type):
-            data = websafe_decode(data)
-
         buf = bytearray(data)
         if buf.pop(0) != 0x05:
             raise ValueError('Reserved byte value must be 0x05')
@@ -196,9 +193,6 @@ class RegistrationData(object):
 class SignatureData(object):
 
     def __init__(self, data):
-        if isinstance(data, six.text_type):
-            data = websafe_decode(data)
-
         buf = bytearray(data)
         self.user_presence = buf.pop(0)
         self.counter = struct.unpack('>I', _pop_bytes(buf, 4))[0]
@@ -349,7 +343,7 @@ class RegisterResponse(JSONDict, WithClientData):
 
     @property
     def registrationData(self):
-        return RegistrationData(self['registrationData'])
+        return RegistrationData(websafe_decode(self['registrationData']))
 
     def verify(self, app_param):
         self.registrationData.verify(app_param, self.challengeParameter)
@@ -360,7 +354,7 @@ class SignResponse(JSONDict, WithClientData, WithKeyHandle):
 
     @property
     def signatureData(self):
-        return SignatureData(self['signatureData'])
+        return SignatureData(websafe_decode(self['signatureData']))
 
     def verify(self, app_param, der_pubkey):
         self.signatureData.verify(app_param, self.challengeParameter,
