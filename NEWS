@@ -1,4 +1,7 @@
-* Version 4.0.2 (unreleased)
+* Version 5.0.0 (unreleased)
+ ** Major release: Rewrote most of the library to get rid of legacy.
+ ** API changes everywhere, this release it NOT backwards compatible.
+ ** Full Python 2.7 and 3.3+ support.
 
 * Version 4.0.1 (released 2016-04-05)
  ** Bugfix: Certificates sometimes failed to parse on Python 3.
