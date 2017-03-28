@@ -38,8 +38,8 @@ To build a source release tar ball, run this command:
 The resulting build will be created in the dist/ subdirectory.
 
 === Example
-See examples/u2f_server.py for a working example of a HTTP server for
-U2F enrollment and authentication. u2f_server.py can be run as a stand-alone
+See `examples/u2f_server.py` for a working example of a HTTP server for
+U2F enrollment and authentication. `u2f_server.py` can be run as a stand-alone
 server, and can be used to test a U2F client implementation, such as
 python-u2flib-host, using for example cURL.
 
