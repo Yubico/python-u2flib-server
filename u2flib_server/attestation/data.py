@@ -57,6 +57,7 @@ YUBICO = {
         {
             "deviceId": "1.3.6.1.4.1.41482.1.3",
             "displayName": "YubiKey Plus",
+            "transports": 4,
             "deviceUrl": "https://www.yubico.com/products/yubikey-hardware/",
             "imageUrl": "https://developers.yubico.com/U2F/Images/PLS.png",
             "selectors": [
