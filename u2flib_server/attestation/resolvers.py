@@ -72,9 +72,7 @@ class MetadataResolver(object):
             cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
             subject = cert.subject \
                 .get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
-            if subject not in self._certs:
-                self._certs[subject] = []
-            self._certs[subject].append(cert)
+            self._certs.setdefault(subject, []).append(cert)
             self._metadata[cert] = metadata
 
     def _verify_cert(self, cert, pubkey):
