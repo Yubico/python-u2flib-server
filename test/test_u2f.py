@@ -5,6 +5,7 @@ from u2flib_server.model import (U2fRegisterRequest, U2fSignRequest,
 from u2flib_server.utils import websafe_decode, websafe_encode
 from .soft_u2f_v2 import SoftU2FDevice
 import unittest
+import six
 
 APP_ID = 'https://www.example.com'
 APP_ID = 'http://www.example.com/appid'
@@ -140,11 +141,11 @@ class U2fTest(unittest.TestCase):
         challenge1.complete(response1)
         challenge2.complete(response2)
 
-        self.assertRaisesRegexp(ValueError, 'challenge', challenge1.complete,
-                                response2)
+        self.assertRaisesRegex(ValueError, 'challenge', challenge1.complete,
+                               response2)
 
-        self.assertRaisesRegexp(ValueError, 'challenge', challenge2.complete,
-                                response1)
+        self.assertRaisesRegex(ValueError, 'challenge', challenge2.complete,
+                               response1)
 
     def test_wrong_facet(self):
         token = SoftU2FDevice()
@@ -156,8 +157,8 @@ class U2fTest(unittest.TestCase):
             data['registerRequests'][0]
         )
 
-        self.assertRaisesRegexp(ValueError, 'facet', request.complete, response,
-                                FACETS)
+        self.assertRaisesRegex(ValueError, 'facet', request.complete, response,
+                               FACETS)
 
         response2 = token.register(
             FACET,
@@ -175,8 +176,8 @@ class U2fTest(unittest.TestCase):
             data['registeredKeys'][0]
         )
 
-        self.assertRaisesRegexp(ValueError, 'facet', signreq.complete, response,
-                                FACETS)
+        self.assertRaisesRegex(ValueError, 'facet', signreq.complete, response,
+                               FACETS)
 
     def test_wrong_challenge(self):
         device = SoftU2FDevice()
@@ -185,8 +186,8 @@ class U2fTest(unittest.TestCase):
         response = device.register(FACET, data['appId'],
                                    data['registerRequests'][0])
         request2 = begin_registration(APP_ID)
-        self.assertRaisesRegexp(ValueError, 'challenge', complete_registration,
-                                request2.json, response)
+        self.assertRaisesRegex(ValueError, 'challenge', complete_registration,
+                               request2.json, response)
 
     def test_invalid_signature(self):
         device = SoftU2FDevice()
@@ -200,5 +201,9 @@ class U2fTest(unittest.TestCase):
         response['registrationData'] = websafe_encode(raw_data)
         response = response.json
 
-        self.assertRaisesRegexp(ValueError, 'signature', complete_registration,
-                                request.json, response)
+        self.assertRaisesRegex(ValueError, 'signature', complete_registration,
+                               request.json, response)
+
+
+if six.PY2:
+    U2fTest.assertRaisesRegex = U2fTest.assertRaisesRegexp
