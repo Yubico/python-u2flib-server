@@ -28,12 +28,13 @@
 
 from u2flib_server.utils import websafe_encode, websafe_decode, sha_256
 from cryptography import x509
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 from binascii import a2b_hex
-from enum import Enum
+from enum import Enum, IntEnum, unique
 import struct
 import json
 import six
@@ -109,7 +110,8 @@ def _validate_client_data(client_data, challenge, typ, valid_facets):
             client_data.origin, valid_facets))
 
 
-class Transport(Enum):
+@unique
+class Transport(IntEnum):
     BT = 0x01  # Bluetooth Classic
     BLE = 0x02  # Bluetooth Low Energy
     USB = 0x04
@@ -143,6 +145,7 @@ class Transport(Enum):
             return None
 
 
+@unique
 class Type(Enum):
     REGISTER = 'navigator.id.finishEnrollment'
     SIGN = 'navigator.id.getAssertion'
@@ -176,7 +179,10 @@ class RegistrationData(object):
 
         verifier.update(b'\0' + app_param + chal_param + self.key_handle +
                         self.pub_key)
-        verifier.verify()
+        try:
+            verifier.verify()
+        except InvalidSignature:
+            raise ValueError('Attestation signature is invalid')
 
     @property
     def bytes(self):
@@ -206,7 +212,10 @@ class SignatureData(object):
                         six.int2byte(self.user_presence) +
                         struct.pack('>I', self.counter) +
                         chal_param)
-        verifier.verify()
+        try:
+            verifier.verify()
+        except InvalidSignature:
+            raise ValueError('U2F signature is invalid')
 
     @property
     def bytes(self):
