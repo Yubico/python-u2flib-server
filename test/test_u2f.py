@@ -1,7 +1,8 @@
 from u2flib_server.u2f import (begin_registration, complete_registration,
                                begin_authentication, complete_authentication)
-from u2flib_server.model import U2fRegisterRequest, U2fSignRequest
-from u2flib_server.utils import websafe_decode
+from u2flib_server.model import (U2fRegisterRequest, U2fSignRequest,
+                                 RegisterResponse)
+from u2flib_server.utils import websafe_decode, websafe_encode
 from .soft_u2f_v2 import SoftU2FDevice
 import unittest
 
@@ -139,19 +140,11 @@ class U2fTest(unittest.TestCase):
         challenge1.complete(response1)
         challenge2.complete(response2)
 
-        try:
-            challenge1.complete(response2)
-        except:
-            pass
-        else:
-            assert False, "Incorrect validation should fail!"
+        self.assertRaisesRegexp(ValueError, 'challenge', challenge1.complete,
+                                response2)
 
-        try:
-            challenge2.complete(response1)
-        except:
-            pass
-        else:
-            assert False, "Incorrect validation should fail!"
+        self.assertRaisesRegexp(ValueError, 'challenge', challenge2.complete,
+                                response1)
 
     def test_wrong_facet(self):
         token = SoftU2FDevice()
@@ -163,12 +156,8 @@ class U2fTest(unittest.TestCase):
             data['registerRequests'][0]
         )
 
-        try:
-            request.complete(response, FACETS)
-        except:
-            pass
-        else:
-            assert False, "Incorrect facet should fail!"
+        self.assertRaisesRegexp(ValueError, 'facet', request.complete, response,
+                                FACETS)
 
         response2 = token.register(
             FACET,
@@ -186,9 +175,30 @@ class U2fTest(unittest.TestCase):
             data['registeredKeys'][0]
         )
 
-        try:
-            signreq.complete(response, FACETS)
-        except:
-            pass
-        else:
-            assert False, "Incorrect facet should fail!"
+        self.assertRaisesRegexp(ValueError, 'facet', signreq.complete, response,
+                                FACETS)
+
+    def test_wrong_challenge(self):
+        device = SoftU2FDevice()
+        request = begin_registration(APP_ID)
+        data = request.data_for_client
+        response = device.register(FACET, data['appId'],
+                                   data['registerRequests'][0])
+        request2 = begin_registration(APP_ID)
+        self.assertRaisesRegexp(ValueError, 'challenge', complete_registration,
+                                request2.json, response)
+
+    def test_invalid_signature(self):
+        device = SoftU2FDevice()
+        request = begin_registration(APP_ID)
+        data = request.data_for_client
+        response = device.register(FACET, data['appId'],
+                                   data['registerRequests'][0])
+        response = RegisterResponse.wrap(response)
+        raw_data = response.registrationData.bytes
+        raw_data = raw_data[:-4] + b'\0\0\0\0'
+        response['registrationData'] = websafe_encode(raw_data)
+        response = response.json
+
+        self.assertRaisesRegexp(ValueError, 'signature', complete_registration,
+                                request.json, response)
