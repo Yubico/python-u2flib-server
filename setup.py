@@ -49,8 +49,6 @@ setup(
     tests_require=[],
     extras_require={
         'u2f_server': ['WebOb'],
-        'u2f_server:python_version=="2.6"': ['argparse'],
-        'yubiauth_server': ['yubiauth', 'WebOb'],
     },
     classifiers=[
         'License :: OSI Approved :: BSD License',

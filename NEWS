@@ -1,8 +1,8 @@
-* Version 5.0.0 (unreleased)
- ** Major release: Rewrote most of the library to get rid of legacy.
- ** API changes everywhere, this release it NOT backwards compatible.
+* Version 5.0.0 (released 2017-03-30)
+ ** Major release: This release is NOT backwards compatible.
  ** Object model has been updated to reflect the 1.1 FIDO JavaScript API.
  ** Full Python 2.7 and 3.3+ support.
+ ** Lots of things have been rewritten.
 
 * Version 4.0.1 (released 2016-04-05)
  ** Bugfix: Certificates sometimes failed to parse on Python 3.
