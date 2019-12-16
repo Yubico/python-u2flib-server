@@ -3,12 +3,12 @@ sudo: false
 
 python:
   - "2.7"
-  - "3.3"
-  - "3.4"
   - "3.5"
   - "3.6"
-  - "pypy-5.4.1"
-  - "pypy3.3-5.2-alpha1"
+  - "3.7"
+  - "3.8"
+  - "pypy"
+  - "pypy3"
 
 cache:
   directories:
