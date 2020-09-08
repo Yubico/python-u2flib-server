@@ -66,11 +66,21 @@ class ExtensionMatcher(DeviceMatcher):
     def matches(self, certificate, parameters={}):
         key = parameters.get('key')
         match_value = parameters.get('value')
+
+        if isinstance(match_value, str):
+            match_value = match_value.encode('utf-8')
+
+        if isinstance(match_value, dict):
+            if match_value['type'] == 'hex':
+                match_value = bytes.fromhex(match_value['value'])
+            else:
+                return False
+
         extension_value = _get_ext_by_oid(certificate, key)
 
         return extension_value is not None and (
             match_value is None or
-            match_value.encode('utf-8') == extension_value
+            match_value == extension_value
         )
 
 
