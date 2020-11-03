@@ -3,9 +3,9 @@ Provides functionality for working with the server side aspects of the U2F
 protocol as defined in the link:http://fidoalliance.org/specifications/download[FIDO specifications].
 It supports Python 2.7, Python 3.3+ and PyPy 2.7+.
 
-NOTE: This project is in maintenance mode,
-https://developers.yubico.com/python-fido2/[python-fido2] is a new project with
-support for U2F and FIDO2.
+NOTE: This project is deprecated and new features will not be added. Please see
+https://developers.yubico.com/python-fido2/[python-fido2] which replaces this
+project.
 
 To read more about U2F and how to use a U2F library, visit
 link:http://developers.yubico.com/U2F[developers.yubico.com/U2F].
