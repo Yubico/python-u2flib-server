@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from cryptography.x509 import ExtensionNotFound, ObjectIdentifier
+from binascii import a2b_hex
 
 
 __all__ = [
@@ -72,7 +73,7 @@ class ExtensionMatcher(DeviceMatcher):
 
         if isinstance(match_value, dict):
             if match_value['type'] == 'hex':
-                match_value = bytes.fromhex(match_value['value'])
+                match_value = a2b_hex(match_value['value'])
             else:
                 return False
 
